@@ -1,0 +1,92 @@
+:root {
+  --nav-bg: #5247e6;
+  --bg-body: #f4f5f9;
+  --card-bg: #ffffff;
+  --text-dark: #1e293b;
+  --text-muted: #64748b;
+  --btn-blue: #0073ff;
+  --btn-blue-hover: #005bb5;
+  --border-color: #e2e8f0;
+  --radius: 12px;
+  --danger: #ef4444;
+  --success: #10b981;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+body { background-color: var(--bg-body); color: var(--text-dark); min-height: 100vh; }
+
+/* Navegación */
+navbar {
+  background-color: var(--nav-bg);
+  color: white;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.nav-brand { font-size: 1.4rem; font-weight: 700; }
+.nav-links { display: flex; gap: 0.75rem; list-style: none; }
+.nav-links a {
+  color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+  padding: 0.4rem 0.8rem; border-radius: 8px; transition: all 0.2s;
+}
+.nav-links a:hover, .nav-links a.active { color: white; background-color: rgba(255, 255, 255, 0.18); }
+
+/* Layout */
+.container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+.card {
+  background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem;
+  border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+.card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 2px solid var(--bg-body); padding-bottom: 0.5rem; }
+
+/* Formularios */
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+input, select {
+  width: 100%; padding: 0.75rem; border: 1px solid var(--border-color);
+  border-radius: 8px; font-size: 0.95rem; outline: none;
+}
+input:focus, select:focus { border-color: var(--btn-blue); }
+.grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.grid-3-col { display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: end; }
+
+/* Botones */
+.btn {
+  padding: 0.75rem 1.25rem; border: none; border-radius: 8px; font-weight: 600;
+  cursor: pointer; background-color: var(--btn-blue); color: white; transition: background-color 0.2s;
+}
+.btn:hover { background-color: var(--btn-blue-hover); }
+.btn-secondary { background-color: #e2e8f0; color: var(--text-dark); }
+.btn-secondary:hover { background-color: #cbd5e1; }
+.btn-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
+
+/* Filas dinámicas (Recetas / Presupuestos) */
+.ingrediente-row, .receta-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 0.8rem; background-color: #f8fafc; border-radius: 6px;
+  margin-bottom: 0.5rem; border: 1px solid var(--border-color);
+}
+
+/* Resúmenes de Costos */
+.costo-resumen {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 1rem;
+  border-radius: 8px; margin-top: 1rem; color: #166534;
+}
+.costo-row { display: flex; justify-content: space-between; font-size: 0.95rem; }
+.costo-total-final { font-size: 1.2rem; font-weight: 700; border-top: 1px dashed #bbf7d0; padding-top: 0.5rem; }
+
+/* Tablas */
+.table-responsive { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+th { color: var(--text-muted); font-weight: 600; background-color: #f8fafc; }
+
+/* Responsive */
+@media (max-width: 640px) {
+  navbar { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+  .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+  .grid-2-col, .grid-3-col { grid-template-columns: 1fr; }
+}
