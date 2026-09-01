@@ -10,97 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
-
-  <style>
-    :root {
-      --nav-bg: #5247e6;
-      --bg-body: #f4f5f9;
-      --card-bg: #ffffff;
-      --text-dark: #1e293b;
-      --text-muted: #64748b;
-      --btn-blue: #0073ff;
-      --btn-blue-hover: #005bb5;
-      --border-color: #e2e8f0;
-      --radius: 12px;
-      --danger: #ef4444;
-      --success: #10b981;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
-    body { background-color: var(--bg-body); color: var(--text-dark); min-height: 100vh; }
-
-    /* Navegación */
-    navbar {
-      background-color: var(--nav-bg);
-      color: white;
-      padding: 0.85rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .nav-brand { font-size: 1.4rem; font-weight: 700; }
-    .nav-links { display: flex; gap: 0.75rem; list-style: none; }
-    .nav-links a {
-      color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 0.9rem; font-weight: 500;
-      padding: 0.4rem 0.8rem; border-radius: 8px; transition: all 0.2s;
-    }
-    .nav-links a:hover, .nav-links a.active { color: white; background-color: rgba(255, 255, 255, 0.18); }
-
-    /* Layout */
-    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
-    .card {
-      background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem;
-      border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-      margin-bottom: 1.5rem;
-    }
-    .card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 2px solid var(--bg-body); padding-bottom: 0.5rem; }
-
-    /* Formulario */
-    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
-    input, select {
-      width: 100%; padding: 0.75rem; border: 1px solid var(--border-color);
-      border-radius: 8px; font-size: 0.95rem; outline: none;
-    }
-    input:focus, select:focus { border-color: var(--btn-blue); }
-    .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .grid-3-col { display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: end; }
-
-    .btn {
-      padding: 0.75rem 1.25rem; border: none; border-radius: 8px; font-weight: 600;
-      cursor: pointer; background-color: var(--btn-blue); color: white; transition: background-color 0.2s;
-    }
-    .btn:hover { background-color: var(--btn-blue-hover); }
-    .btn-secondary { background-color: #e2e8f0; color: var(--text-dark); }
-    .btn-secondary:hover { background-color: #cbd5e1; }
-
-    /* Lista temporal de ingredientes en la receta */
-    .ingrediente-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0.6rem 0.8rem; background-color: #f8fafc; border-radius: 6px;
-      margin-bottom: 0.5rem; border: 1px solid var(--border-color);
-    }
-
-    /* Resumen de costos */
-    .costo-resumen {
-      display: flex; justify-content: space-between; align-items: center;
-      background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 1rem;
-      border-radius: 8px; margin-top: 1rem; font-weight: 700; color: #166534;
-    }
-
-    /* Tabla */
-    .table-responsive { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
-    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
-    th { color: var(--text-muted); font-weight: 600; background-color: #f8fafc; }
-    .btn-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
-
-    @media (max-width: 640px) {
-      navbar { flex-direction: column; gap: 0.75rem; padding: 1rem; }
-      .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
-      .grid-2-col, .grid-3-col { grid-template-columns: 1fr; }
-    }
-  </style>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
@@ -130,8 +40,9 @@
           </div>
         </div>
 
+        <!-- 1. Ingredientes / Insumos -->
         <div style="margin: 1.5rem 0 1rem 0;">
-          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Agregar Insumos a la Receta</label>
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">1. Insumos e Ingredientes</label>
           <div class="grid-3-col" style="margin-top: 0.5rem;">
             <div class="form-group" style="margin-bottom:0;">
               <select id="select-insumo">
@@ -146,13 +57,49 @@
         </div>
 
         <!-- Detalle dinámico de insumos cargados -->
-        <div id="lista-insumos-receta" style="margin-bottom: 1rem;">
+        <div id="lista-insumos-receta" style="margin-bottom: 1.5rem;">
           <!-- Se agregan dinámicamente -->
         </div>
 
+        <!-- 2. Mano de Obra y Costos Indirectos -->
+        <div style="margin: 1.5rem 0 1rem 0; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">2. Mano de Obra y Packaging / Servicios</label>
+          
+          <div class="grid-2-col" style="margin-top: 0.75rem;">
+            <div class="form-group">
+              <label for="receta-horas">Horas de Trabajo (Tiempo de Elaboración)</label>
+              <input type="number" step="any" id="receta-horas" placeholder="Ej: 1.5 (1 hs y media)" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label for="receta-precio-hora">Valor de la Hora de Trabajo ($)</label>
+              <input type="number" step="any" id="receta-precio-hora" placeholder="Ej: 3000" value="0" min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="receta-packaging">Gastos Adicionales / Packaging / Servicios ($)</label>
+            <input type="number" step="any" id="receta-packaging" placeholder="Ej: 500 (caja, blonda, gas/luz)" value="0" min="0">
+          </div>
+        </div>
+
+        <!-- Resumen de Costos Estratificado -->
         <div class="costo-resumen">
-          <span>Costo Total Directo de Producción:</span>
-          <span id="costo-total-receta">$0.00</span>
+          <div class="costo-row">
+            <span>Costo Insumos Directos:</span>
+            <span id="resumen-costo-insumos">$0.00</span>
+          </div>
+          <div class="costo-row">
+            <span>Mano de Obra Calculada:</span>
+            <span id="resumen-costo-mano-obra">$0.00</span>
+          </div>
+          <div class="costo-row">
+            <span>Packaging y Gastos Varios:</span>
+            <span id="resumen-costo-packaging">$0.00</span>
+          </div>
+          <div class="costo-row costo-total-final">
+            <span>Costo Total de Producción:</span>
+            <span id="costo-total-receta">$0.00</span>
+          </div>
         </div>
 
         <button type="submit" class="btn" style="margin-top: 1rem; width: 100%;">Guardar Receta</button>
@@ -168,7 +115,8 @@
             <tr>
               <th>Receta</th>
               <th>Rendimiento</th>
-              <th>Ingredientes</th>
+              <th>Tiempo / M.O.</th>
+              <th>Insumos</th>
               <th>Costo Total</th>
               <th>Acciones</th>
             </tr>
