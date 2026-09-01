@@ -1,307 +1,307 @@
-// ==========================================
-//    Programa: Umai Recetas                  
-//    Programo: Fernando Albornoz             
-//     Archivo: js/recetas.js            
-//     Version: 1.3 01-09-2026                
-// ==========================================
-import { db } from './firebase-config.js';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc,
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+/* ========================================== */
+/*    Programa: Umai Recetas                  */
+/*    Programo: Fernando Albornoz             */
+/*     Archivo: js/recetas.js                 */
+/*     Version: 1.2 01-09-2026                */
+/* ========================================== */
 
-// DOM
-const formReceta = document.getElementById('form-receta');
-const formTitulo = document.getElementById('form-titulo');
-const recetaIdHidden = document.getElementById('receta-id');
-const recetaNombre = document.getElementById('receta-nombre');
-const recetaRendimiento = document.getElementById('receta-rendimiento');
+document.addEventListener('DOMContentLoaded', () => {
+  let recetas = JSON.parse(localStorage.getItem('umai_recetas')) || [];
+  let ingredientes = JSON.parse(localStorage.getItem('umai_ingredientes')) || [];
+  let ingredientesSeleccionados = [];
 
-const selectInsumo = document.getElementById('select-insumo');
-const insumoCantidad = document.getElementById('insumo-cantidad');
-const btnAgregarInsumo = document.getElementById('btn-agregar-insumo');
-const listaInsumosReceta = document.getElementById('lista-insumos-receta');
+  const formReceta = document.getElementById('form-receta');
+  const inputId = document.getElementById('receta-id');
+  const inputNombre = document.getElementById('receta-nombre');
+  const inputRendimiento = document.getElementById('receta-rendimiento');
+  const selectIngrediente = document.getElementById('select-ingrediente');
+  const inputCantidad = document.getElementById('ingrediente-cantidad');
+  const btnAgregarIngrediente = document.getElementById('btn-agregar-ingrediente');
+  const listaIngredientesDiv = document.getElementById('lista-ingredientes-receta');
+  const btnCancelar = document.getElementById('btn-cancelar-receta');
+  const tablaRecetas = document.getElementById('tabla-recetas');
+  const resumenCosto = document.getElementById('resumen-costo-receta');
 
-const recetaHoras = document.getElementById('receta-horas');
-const recetaPrecioHora = document.getElementById('receta-precio-hora');
-const recetaPackaging = document.getElementById('receta-packaging');
+  const modal = document.getElementById('modal-receta');
+  const modalBody = document.getElementById('modal-body-receta');
+  const btnCerrarModal = document.getElementById('btn-cerrar-modal-receta');
 
-const resumenCostoInsumos = document.getElementById('resumen-costo-insumos');
-const resumenCostoManoObra = document.getElementById('resumen-costo-mano-obra');
-const resumenCostoPackaging = document.getElementById('resumen-costo-packaging');
-const costoTotalRecetaEl = document.getElementById('costo-total-receta');
-
-const btnSubmitReceta = document.getElementById('btn-submit-receta');
-const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
-const tablaRecetas = document.getElementById('tabla-recetas');
-
-// Modal
-const modalDetalle = document.getElementById('modal-detalle');
-const modalTitulo = document.getElementById('modal-titulo');
-const modalBody = document.getElementById('modal-body');
-const btnCerrarModal = document.getElementById('btn-cerrar-modal');
-
-let inventarioInsumos = [];
-let insumosEnReceta = [];
-let listaRecetasLocales = [];
-
-// 1. Cargar Insumos
-onSnapshot(collection(db, "ingredientes"), (snapshot) => {
-  inventarioInsumos = [];
-  selectInsumo.innerHTML = '<option value="">-- Seleccionar Insumo --</option>';
-
-  snapshot.docs.forEach(docSnap => {
-    const item = { id: docSnap.id, ...docSnap.data() };
-    inventarioInsumos.push(item);
-
-    const option = document.createElement('option');
-    option.value = item.id;
-    option.textContent = `${item.nombre} (${item.unidad})`;
-    selectInsumo.appendChild(option);
-  });
-});
-
-// 2. Agregar Insumo temporal
-btnAgregarInsumo.addEventListener('click', () => {
-  const insumoId = selectInsumo.value;
-  const cantidad = parseFloat(insumoCantidad.value);
-
-  if (!insumoId || isNaN(cantidad) || cantidad <= 0) {
-    alert("Por favor elegí un insumo e ingresá una cantidad válida.");
-    return;
+  // Cargar selector de ingredientes
+  function cargarSelectorIngredientes() {
+    selectIngrediente.innerHTML = '<option value="">Seleccione un ingrediente...</option>';
+    ingredientes.forEach(ing => {
+      const option = document.createElement('option');
+      option.value = ing.id;
+      option.textContent = `${ing.nombre} ($${parseFloat(ing.precio || 0).toFixed(2)} / ${ing.unidad})`;
+      selectIngrediente.appendChild(option);
+    });
   }
 
-  const insumoBase = inventarioInsumos.find(i => i.id === insumoId);
-  if (!insumoBase) return;
+  // Agregar ingrediente
+  btnAgregarIngrediente.addEventListener('click', () => {
+    const ingId = selectIngrediente.value;
+    const cantidad = parseFloat(inputCantidad.value) || 0;
 
-  const costoUnitario = insumoBase.cantidad > 0 ? (insumoBase.precio / insumoBase.cantidad) : 0;
-  const costoTotalItem = costoUnitario * cantidad;
+    if (!ingId || cantidad <= 0) {
+      alert('Seleccione un ingrediente e ingrese una cantidad válida.');
+      return;
+    }
 
-  insumosEnReceta.push({
-    insumoId: insumoBase.id,
-    nombre: insumoBase.nombre,
-    unidad: insumoBase.unidad,
-    cantidad: cantidad,
-    costoCalculado: costoTotalItem
-  });
+    const ingObj = ingredientes.find(i => i.id == ingId);
+    if (!ingObj) return;
 
-  selectInsumo.value = '';
-  insumoCantidad.value = '';
+    const costoCalculado = (parseFloat(ingObj.precio) / parseFloat(ingObj.cantidad)) * cantidad;
 
-  calcularTotalesYRenderizar();
-});
-
-recetaHoras.addEventListener('input', calcularTotalesYRenderizar);
-recetaPrecioHora.addEventListener('input', calcularTotalesYRenderizar);
-recetaPackaging.addEventListener('input', calcularTotalesYRenderizar);
-
-function calcularTotalesYRenderizar() {
-  listaInsumosReceta.innerHTML = '';
-  let subtotalInsumos = 0;
-
-  insumosEnReceta.forEach((item, index) => {
-    subtotalInsumos += item.costoCalculado;
-
-    const row = document.createElement('div');
-    row.className = 'ingrediente-row';
-    row.innerHTML = `
-      <span><strong>${item.nombre}</strong> - ${item.cantidad} ${item.unidad} ($${item.costoCalculado.toFixed(2)})</span>
-      <button type="button" class="btn-delete" style="font-size:0.8rem;">Quitar</button>
-    `;
-
-    row.querySelector('.btn-delete').addEventListener('click', () => {
-      insumosEnReceta.splice(index, 1);
-      calcularTotalesYRenderizar();
+    ingredientesSeleccionados.push({
+      ingredienteId: ingObj.id,
+      nombre: ingObj.nombre,
+      unidad: ingObj.unidad,
+      cantidadUsada: cantidad,
+      costoCalculado: costoCalculado
     });
 
-    listaInsumosReceta.appendChild(row);
+    inputCantidad.value = '';
+    selectIngrediente.value = '';
+    renderListaIngredientes();
   });
 
-  const horas = parseFloat(recetaHoras.value) || 0;
-  const precioHora = parseFloat(recetaPrecioHora.value) || 0;
-  const packaging = parseFloat(recetaPackaging.value) || 0;
+  function renderListaIngredientes() {
+    listaIngredientesDiv.innerHTML = '';
+    if (ingredientesSeleccionados.length === 0) {
+      listaIngredientesDiv.innerHTML = '<p style="font-size: 0.85rem; color: #64748b; text-align: center;">No hay ingredientes agregados.</p>';
+      calcularCostoTotal();
+      return;
+    }
 
-  const costoManoObra = horas * precioHora;
-  const costoTotal = subtotalInsumos + costoManoObra + packaging;
+    ingredientesSeleccionados.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'ingrediente-row';
+      row.innerHTML = `
+        <div>
+          <strong>${item.nombre}</strong>: ${item.cantidadUsada} ${item.unidad}
+          <div style="font-size: 0.8rem; color: #64748b;">Costo: $${item.costoCalculado.toFixed(2)}</div>
+        </div>
+        <button type="button" class="btn-delete" onclick="eliminarIngredienteItem(${index})">✕</button>
+      `;
+      listaIngredientesDiv.appendChild(row);
+    });
 
-  resumenCostoInsumos.textContent = `$${subtotalInsumos.toFixed(2)}`;
-  resumenCostoManoObra.textContent = `$${costoManoObra.toFixed(2)}`;
-  resumenCostoPackaging.textContent = `$${packaging.toFixed(2)}`;
-  costoTotalRecetaEl.textContent = `$${costoTotal.toFixed(2)}`;
-}
-
-// 3. Guardar / Actualizar Receta
-formReceta.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  if (insumosEnReceta.length === 0) {
-    alert("Agregá al menos un insumo a la receta antes de guardar.");
-    return;
+    calcularCostoTotal();
   }
 
-  const subtotalInsumos = insumosEnReceta.reduce((acc, curr) => acc + curr.costoCalculado, 0);
-  const horas = parseFloat(recetaHoras.value) || 0;
-  const precioHora = parseFloat(recetaPrecioHora.value) || 0;
-  const packaging = parseFloat(recetaPackaging.value) || 0;
-
-  const costoManoObra = horas * precioHora;
-  const costoTotalCalculado = subtotalInsumos + costoManoObra + packaging;
-
-  const payload = {
-    nombre: recetaNombre.value.trim(),
-    rendimiento: recetaRendimiento.value.trim(),
-    insumos: insumosEnReceta,
-    costoInsumos: subtotalInsumos,
-    horasTrabajo: horas,
-    precioHora: precioHora,
-    costoManoObra: costoManoObra,
-    costoPackaging: packaging,
-    costoTotal: costoTotalCalculado,
-    actualizadoAt: serverTimestamp()
+  window.eliminarIngredienteItem = function(index) {
+    ingredientesSeleccionados.splice(index, 1);
+    renderListaIngredientes();
   };
 
-  const currentId = recetaIdHidden.value;
+  function calcularCostoTotal() {
+    const total = ingredientesSeleccionados.reduce((acc, item) => acc + item.costoCalculado, 0);
+    resumenCosto.textContent = `$${total.toFixed(2)}`;
+    return total;
+  }
 
-  try {
-    if (currentId) {
-      await updateDoc(doc(db, "recetas", currentId), payload);
-    } else {
-      payload.creadoAt = serverTimestamp();
-      await addDoc(collection(db, "recetas"), payload);
+  // Guardar Receta
+  formReceta.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if (ingredientesSeleccionados.length === 0) {
+      alert('Debe agregar al menos un ingrediente a la receta.');
+      return;
     }
-    
+
+    const id = inputId.value ? parseInt(inputId.value) : Date.now();
+    const nombre = inputNombre.value.trim();
+    const rendimiento = parseInt(inputRendimiento.value) || 1;
+    const costoTotal = calcularCostoTotal();
+
+    const nuevaReceta = {
+      id,
+      nombre,
+      rendimiento,
+      ingredientes: [...ingredientesSeleccionados],
+      costoTotal
+    };
+
+    if (inputId.value) {
+      const index = recetas.findIndex(r => r.id == id);
+      if (index >= 0) recetas[index] = nuevaReceta;
+    } else {
+      recetas.push(nuevaReceta);
+    }
+
+    localStorage.setItem('umai_recetas', JSON.stringify(recetas));
     resetFormulario();
-  } catch (error) {
-    console.error("Error al procesar la receta:", error);
-    alert("Ocurrió un error al guardar/actualizar.");
+    cargarTablaRecetas();
+  });
+
+  function resetFormulario() {
+    formReceta.reset();
+    inputId.value = '';
+    ingredientesSeleccionados = [];
+    inputRendimiento.value = 1;
+    btnCancelar.style.display = 'none';
+    renderListaIngredientes();
   }
-});
 
-function resetFormulario() {
-  formReceta.reset();
-  recetaIdHidden.value = '';
-  insumosEnReceta = [];
-  recetaHoras.value = '0';
-  recetaPrecioHora.value = '0';
-  recetaPackaging.value = '0';
-  
-  formTitulo.textContent = '📖 Nueva Receta Base';
-  btnSubmitReceta.textContent = 'Guardar Receta';
-  btnCancelarEdicion.style.display = 'none';
+  btnCancelar.addEventListener('click', resetFormulario);
 
-  calcularTotalesYRenderizar();
-}
+  // Cargar Tabla de Recetas
+  function cargarTablaRecetas() {
+    tablaRecetas.innerHTML = '';
 
-btnCancelarEdicion.addEventListener('click', resetFormulario);
+    if (recetas.length === 0) {
+      tablaRecetas.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">No hay recetas guardadas.</td></tr>';
+      return;
+    }
 
-// 4. Renderizar Lista de Recetas
-onSnapshot(collection(db, "recetas"), (snapshot) => {
-  tablaRecetas.innerHTML = '';
-  listaRecetasLocales = [];
-
-  if (snapshot.empty) {
-    tablaRecetas.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-          No hay recetas guardadas aún.
+    recetas.forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${r.nombre}</strong></td>
+        <td>${r.rendimiento} porciones</td>
+        <td>$${parseFloat(r.costoTotal || 0).toFixed(2)}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-action btn-ver" onclick="verReceta(${r.id})" title="Ver Detalle">👁️</button>
+            <button class="btn-action btn-editar" onclick="descargarPDFReceta(${r.id})" title="Descargar PDF" style="background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;">📄</button>
+            <button class="btn-action btn-editar" onclick="editarReceta(${r.id})" title="Editar">✏️</button>
+            <button class="btn-action btn-borrar" onclick="eliminarReceta(${r.id})" title="Borrar">🗑️</button>
+          </div>
         </td>
-      </tr>`;
-    return;
+      `;
+      tablaRecetas.appendChild(tr);
+    });
   }
 
-  snapshot.docs.forEach(docSnap => {
-    const data = docSnap.data();
-    const id = docSnap.id;
-    const receta = { id, ...data };
-    listaRecetasLocales.push(receta);
+  // Modales
+  window.verReceta = function(id) {
+    const r = recetas.find(item => item.id == id);
+    if (!r) return;
 
-    const cantidadInsumos = data.insumos ? data.insumos.length : 0;
-    const costo = data.costoTotal ? parseFloat(data.costoTotal).toFixed(2) : '0.00';
-    const hs = data.horasTrabajo || 0;
+    let itemsHtml = r.ingredientes.map(i => `
+      <li style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; padding-bottom: 0.4rem; border-bottom: 1px dashed #e2e8f0;">
+        <span>${i.nombre} (${i.cantidadUsada} ${i.unidad})</span>
+        <span>$${parseFloat(i.costoCalculado).toFixed(2)}</span>
+      </li>
+    `).join('');
 
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td><strong>${data.nombre}</strong></td>
-      <td>${data.rendimiento}</td>
-      <td>${hs} hs</td>
-      <td>${cantidadInsumos} ítem(s)</td>
-      <td><strong>$${costo}</strong></td>
-      <td>
-        <div class="action-btns">
-          <button class="btn-action btn-ver" title="Ver detalle">👁️</button>
-          <button class="btn-action btn-editar" title="Editar">✏️</button>
-          <button class="btn-action btn-eliminar" title="Eliminar">🗑️</button>
+    const costoPorcion = r.costoTotal / r.rendimiento;
+
+    modalBody.innerHTML = `
+      <h3 style="margin-bottom: 0.5rem; color: #5247e6;">${r.nombre}</h3>
+      <p style="margin-bottom: 1rem; color: #64748b;">Rendimiento: <strong>${r.rendimiento} porciones</strong></p>
+      <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">Ingredientes:</h4>
+      <ul style="list-style: none; padding: 0; margin-bottom: 1rem;">
+        ${itemsHtml}
+      </ul>
+      <div style="background-color: #f8fafc; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Costo Total:</span> <span>$${parseFloat(r.costoTotal).toFixed(2)}</span>
         </div>
-      </td>
+        <div style="display: flex; justify-content: space-between; font-weight: 700; margin-top: 0.25rem; border-top: 1px solid #cbd5e1; padding-top: 0.25rem;">
+          <span>Costo por Porción:</span> <span>$${costoPorcion.toFixed(2)}</span>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; text-align: right;">
+        <button class="btn" onclick="descargarPDFReceta(${r.id})" style="background-color: #10b981;">📄 Descargar PDF</button>
+      </div>
     `;
 
-    fila.querySelector('.btn-ver').addEventListener('click', () => verReceta(receta));
-    fila.querySelector('.btn-editar').addEventListener('click', () => editarReceta(receta));
-    fila.querySelector('.btn-eliminar').addEventListener('click', () => eliminarReceta(id, data.nombre));
+    modal.style.display = 'flex';
+  };
 
-    tablaRecetas.appendChild(fila);
+  btnCerrarModal.addEventListener('click', () => {
+    modal.style.display = 'none';
   });
-});
 
-// Modal Actions
-function verReceta(receta) {
-  modalTitulo.textContent = receta.nombre;
-  
-  let htmlInsumos = receta.insumos.map(i => 
-    `<li>${i.nombre}: ${i.cantidad} ${i.unidad} ($${parseFloat(i.costoCalculado).toFixed(2)})</li>`
-  ).join('');
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
 
-  modalBody.innerHTML = `
-    <p><strong>Rendimiento:</strong> ${receta.rendimiento}</p>
-    <hr style="margin: 0.5rem 0;">
-    <p><strong>Ingredientes:</strong></p>
-    <ul style="padding-left: 1.2rem; margin-bottom: 0.5rem;">${htmlInsumos}</ul>
-    <hr style="margin: 0.5rem 0;">
-    <p><strong>Tiempo:</strong> ${receta.horasTrabajo || 0} hs ($${parseFloat(receta.costoManoObra || 0).toFixed(2)})</p>
-    <p><strong>Packaging / Varios:</strong> $${parseFloat(receta.costoPackaging || 0).toFixed(2)}</p>
-    <p style="font-size: 1.1rem; font-weight: bold; margin-top: 0.5rem; color: #166534;">
-      Costo Total: $${parseFloat(receta.costoTotal).toFixed(2)}
-    </p>
-  `;
+  window.editarReceta = function(id) {
+    const r = recetas.find(item => item.id == id);
+    if (!r) return;
 
-  modalDetalle.style.display = 'flex';
-}
+    inputId.value = r.id;
+    inputNombre.value = r.nombre;
+    inputRendimiento.value = r.rendimiento;
+    ingredientesSeleccionados = [...r.ingredientes];
 
-btnCerrarModal.addEventListener('click', () => modalDetalle.style.display = 'none');
-window.addEventListener('click', (e) => { if (e.target === modalDetalle) modalDetalle.style.display = 'none'; });
+    btnCancelar.style.display = 'block';
+    renderListaIngredientes();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-// Editar
-function editarReceta(receta) {
-  recetaIdHidden.value = receta.id;
-  recetaNombre.value = receta.nombre;
-  recetaRendimiento.value = receta.rendimiento;
-  recetaHoras.value = receta.horasTrabajo || 0;
-  recetaPrecioHora.value = receta.precioHora || 0;
-  recetaPackaging.value = receta.costoPackaging || 0;
-
-  insumosEnReceta = [...(receta.insumos || [])];
-
-  formTitulo.textContent = '✏️ Editar Receta';
-  btnSubmitReceta.textContent = 'Actualizar Receta';
-  btnCancelarEdicion.style.display = 'block';
-
-  calcularTotalesYRenderizar();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// Eliminar
-async function eliminarReceta(id, nombre) {
-  if (confirm(`¿Estás seguro de eliminar la receta "${nombre}"?`)) {
-    try {
-      await deleteDoc(doc(db, "recetas", id));
-    } catch (error) {
-      console.error("Error al eliminar la receta:", error);
-      alert("No se pudo eliminar la receta.");
+  window.eliminarReceta = function(id) {
+    if (confirm('¿Está seguro de eliminar esta receta?')) {
+      recetas = recetas.filter(r => r.id != id);
+      localStorage.setItem('umai_recetas', JSON.stringify(recetas));
+      cargarTablaRecetas();
     }
-  }
-}
+  };
+
+  // Descarga PDF de la Receta
+  window.descargarPDFReceta = function(id) {
+    const r = recetas.find(item => item.id == id);
+    if (!r) return;
+
+    const filasTabla = r.ingredientes.map(i => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">${i.nombre}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 14px;">${i.cantidadUsada} ${i.unidad}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px;">$${parseFloat(i.costoCalculado).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.padding = '30px';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.color = '#1e293b';
+
+    pdfContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #5247e6; padding-bottom: 15px; margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img src="icon-192.png" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;" />
+          <div>
+            <h1 style="margin: 0; color: #5247e6; font-size: 24px;">RECETA: ${r.nombre.toUpperCase()}</h1>
+            <span style="font-size: 13px; color: #64748b;">Umai Recetas</span>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size: 15px; margin-bottom: 20px;"><strong>Rendimiento:</strong> ${r.rendimiento} porciones</p>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+        <thead>
+          <tr style="background-color: #f1f5f9; color: #475569;">
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: left;">INGREDIENTE</th>
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: center;">CANTIDAD</th>
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: right;">COSTO</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasTabla}
+        </tbody>
+      </table>
+
+      <div style="text-align: right; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <p style="margin: 0 0 5px 0; font-size: 14px;">Costo Total Receta: <strong>$${parseFloat(r.costoTotal).toFixed(2)}</strong></p>
+        <p style="margin: 0; font-size: 16px; color: #5247e6;">Costo por Porción: <strong>$${(r.costoTotal / r.rendimiento).toFixed(2)}</strong></p>
+      </div>
+    `;
+
+    const opt = {
+      margin:       10,
+      filename:     `Receta_${r.nombre.replace(/\s+/g, '_')}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(pdfContainer).save();
+  };
+
+  // Inicialización
+  cargarSelectorIngredientes();
+  cargarTablaRecetas();
+});

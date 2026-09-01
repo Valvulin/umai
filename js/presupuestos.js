@@ -1,359 +1,362 @@
-// ==========================================
-//    Programa: Umai Recetas                  
-//    Programo: Fernando Albornoz             
-//     Archivo: js/presupuestos.js            
-//     Version: 1.3 01-09-2026                
-// ==========================================
+/* ========================================== */
+/*    Programa: Umai Recetas                  */
+/*    Programo: Fernando Albornoz             */
+/*     Archivo: js/presupuestos.js            */
+/*     Version: 1.2 01-09-2026                */
+/* ========================================== */
 
-import { db } from './firebase-config.js';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
-  onSnapshot, 
-  serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+document.addEventListener('DOMContentLoaded', () => {
+  let presupuestos = JSON.parse(localStorage.getItem('umai_presupuestos')) || [];
+  let recetas = JSON.parse(localStorage.getItem('umai_recetas')) || [];
+  let recetasSeleccionadas = [];
 
-// DOM - Formulario
-const formPresupuesto = document.getElementById('form-presupuesto');
-const formTitulo = document.getElementById('form-titulo');
-const presupuestoIdHidden = document.getElementById('presupuesto-id');
-const presupuestoFecha = document.getElementById('presupuesto-fecha');
-const presupuestoCliente = document.getElementById('presupuesto-cliente');
+  const formPresupuesto = document.getElementById('form-presupuesto');
+  const inputId = document.getElementById('presupuesto-id');
+  const inputCliente = document.getElementById('cliente-nombre');
+  const inputFecha = document.getElementById('presupuesto-fecha');
+  const selectReceta = document.getElementById('select-receta');
+  const inputCantidad = document.getElementById('receta-cantidad');
+  const btnAgregarReceta = document.getElementById('btn-agregar-receta');
+  const listaRecetasDiv = document.getElementById('lista-recetas-presupuesto');
+  const inputMargen = document.getElementById('margen-ganancia');
+  const btnCancelar = document.getElementById('btn-cancelar');
+  const tablaPresupuestos = document.getElementById('tabla-presupuestos');
 
-// Selector de recetas
-const selectReceta = document.getElementById('select-receta') || document.getElementById('presupuesto-receta');
-const recetaCantidad = document.getElementById('receta-cantidad') || document.getElementById('presupuesto-cantidad');
-const btnAgregarReceta = document.getElementById('btn-agregar-receta');
-const listaRecetasContainer = document.getElementById('lista-recetas-presupuesto');
+  const resumenCostoBase = document.getElementById('resumen-costo-base');
+  const resumenGanancia = document.getElementById('resumen-ganancia');
+  const resumenPrecioFinal = document.getElementById('resumen-precio-final');
 
-const presupuestoMargen = document.getElementById('presupuesto-margen');
+  const modal = document.getElementById('modal-presupuesto');
+  const modalBody = document.getElementById('modal-body');
+  const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 
-// DOM - Resumen de Costos
-const resumenCostoProduccion = document.getElementById('resumen-costo-produccion');
-const resumenGanancia = document.getElementById('resumen-ganancia');
-const presupuestoPrecioFinal = document.getElementById('presupuesto-precio-final');
+  // Establecer fecha de hoy por defecto
+  if (inputFecha && !inputFecha.value) {
+    inputFecha.value = new Date().toISOString().split('T')[0];
+  }
 
-// DOM - Botones y Tabla
-const btnSubmitPresupuesto = document.getElementById('btn-submit-presupuesto');
-const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
-const tablaPresupuestos = document.getElementById('tabla-presupuestos');
-
-// DOM - Modal
-const modalDetalle = document.getElementById('modal-detalle');
-const modalTitulo = document.getElementById('modal-titulo');
-const modalBody = document.getElementById('modal-body');
-const btnCerrarModal = document.getElementById('btn-cerrar-modal');
-
-// Variables Globales
-let listaRecetasBase = []; // Recetas cargadas desde Firestore
-let recetasAgregadas = []; // Recetas agregadas al presupuesto actual
-
-// 1. Cargar recetas disponibles desde Firestore
-onSnapshot(collection(db, "recetas"), (snapshot) => {
-  listaRecetasBase = [];
-  if (selectReceta) {
-    selectReceta.innerHTML = '<option value="">-- Seleccionar Receta --</option>';
-
-    snapshot.docs.forEach(docSnap => {
-      const item = { id: docSnap.id, ...docSnap.data() };
-      listaRecetasBase.push(item);
-
+  // Cargar selector de recetas
+  function cargarSelectorRecetas() {
+    selectReceta.innerHTML = '<option value="">Seleccione una receta...</option>';
+    recetas.forEach(rec => {
       const option = document.createElement('option');
-      option.value = item.id;
-      option.textContent = `${item.nombre} ($${parseFloat(item.costoTotal || 0).toFixed(2)})`;
+      option.value = rec.id;
+      option.textContent = `${rec.nombre} ($${parseFloat(rec.costoTotal || 0).toFixed(2)})`;
       selectReceta.appendChild(option);
     });
   }
-});
 
-// 2. Agregar Receta a la lista del Presupuesto
-if (btnAgregarReceta) {
+  // Agregar Receta a la lista actual
   btnAgregarReceta.addEventListener('click', () => {
     const recetaId = selectReceta.value;
-    const multiplicador = parseFloat(recetaCantidad.value) || 1;
+    const cantidad = parseFloat(inputCantidad.value) || 1;
 
     if (!recetaId) {
-      alert("Por favor elegí una receta de la lista.");
+      alert('Por favor seleccione una receta.');
       return;
     }
 
-    const recetaEncontrada = listaRecetasBase.find(r => r.id === recetaId);
-    if (!recetaEncontrada) return;
+    const recetaObj = recetas.find(r => r.id == recetaId);
+    if (!recetaObj) return;
 
-    // Verificar si la receta ya fue agregada
-    const existe = recetasAgregadas.find(r => r.recetaId === recetaId);
-    if (existe) {
-      existe.cantidad += multiplicador;
+    // Verificar si ya existe en la lista
+    const existeIndex = recetasSeleccionadas.findIndex(r => r.recetaId == recetaId);
+    if (existeIndex >= 0) {
+      recetasSeleccionadas[existeIndex].cantidad += cantidad;
     } else {
-      recetasAgregadas.push({
-        recetaId: recetaEncontrada.id,
-        nombre: recetaEncontrada.nombre,
-        costoUnitario: parseFloat(recetaEncontrada.costoTotal || 0),
-        cantidad: multiplicador
+      recetasSeleccionadas.push({
+        recetaId: recetaObj.id,
+        nombre: recetaObj.nombre,
+        costoUnitario: parseFloat(recetaObj.costoTotal || 0),
+        cantidad: cantidad
       });
     }
 
-    renderListaRecetas();
-    calcularPresupuesto();
-
-    // Limpiar select
+    inputCantidad.value = 1;
     selectReceta.value = '';
-    recetaCantidad.value = '1';
+    renderListaRecetas();
   });
-}
 
-// Renderizar las recetas sumadas
-function renderListaRecetas() {
-  if (!listaRecetasContainer) return;
-  listaRecetasContainer.innerHTML = '';
+  function renderListaRecetas() {
+    listaRecetasDiv.innerHTML = '';
+    if (recetasSeleccionadas.length === 0) {
+      listaRecetasDiv.innerHTML = '<p style="font-size: 0.85rem; color: #64748b; text-align: center;">No hay recetas agregadas a este presupuesto.</p>';
+      calcularTotales();
+      return;
+    }
 
-  if (recetasAgregadas.length === 0) {
-    listaRecetasContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted); font-style:italic;">No hay recetas agregadas al presupuesto.</p>`;
-    return;
+    recetasSeleccionadas.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'receta-row';
+      const subtotal = item.costoUnitario * item.cantidad;
+
+      row.innerHTML = `
+        <div>
+          <strong>${item.nombre}</strong> x ${item.cantidad}
+          <div style="font-size: 0.8rem; color: #64748b;">Subtotal costo: $${subtotal.toFixed(2)}</div>
+        </div>
+        <button type="button" class="btn-delete" onclick="eliminarRecetaItem(${index})">✕</button>
+      `;
+      listaRecetasDiv.appendChild(row);
+    });
+
+    calcularTotales();
   }
 
-  recetasAgregadas.forEach((item, index) => {
-    const subtotal = item.costoUnitario * item.cantidad;
-    const div = document.createElement('div');
-    div.className = 'costo-row';
-    div.style.cssText = 'background:#f8fafc; padding:0.5rem 0.75rem; border-radius:6px; margin-bottom:0.4rem; font-size:0.9rem; border:1px solid #e2e8f0;';
-    div.innerHTML = `
-      <span><strong>${item.nombre}</strong> (${item.cantidad} x $${item.costoUnitario.toFixed(2)})</span>
-      <div style="display:flex; align-items:center; gap:0.5rem;">
-        <strong>$${subtotal.toFixed(2)}</strong>
-        <button type="button" class="btn-action btn-quitar" style="color:var(--danger); cursor:pointer;" title="Quitar">❌</button>
+  window.eliminarRecetaItem = function(index) {
+    recetasSeleccionadas.splice(index, 1);
+    renderListaRecetas();
+  };
+
+  function calcularTotales() {
+    const costoBase = recetasSeleccionadas.reduce((acc, item) => acc + (item.costoUnitario * item.cantidad), 0);
+    const porcentajeGanancia = parseFloat(inputMargen.value) || 0;
+    const ganancia = costoBase * (porcentajeGanancia / 100);
+    const precioFinal = costoBase + ganancia;
+
+    resumenCostoBase.textContent = `$${costoBase.toFixed(2)}`;
+    resumenGanancia.textContent = `$${ganancia.toFixed(2)}`;
+    resumenPrecioFinal.textContent = `$${precioFinal.toFixed(2)}`;
+
+    return { costoBase, ganancia, precioFinal, porcentajeGanancia };
+  }
+
+  inputMargen.addEventListener('input', calcularTotales);
+
+  // Guardar Presupuesto
+  formPresupuesto.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    if (recetasSeleccionadas.length === 0) {
+      alert('Debe agregar al menos una receta al presupuesto.');
+      return;
+    }
+
+    const id = inputId.value ? parseInt(inputId.value) : Date.now();
+    const cliente = inputCliente.value.trim();
+    const fecha = inputFecha.value;
+    const totales = calcularTotales();
+
+    const nuevoPresupuesto = {
+      id,
+      cliente,
+      fecha,
+      recetas: [...recetasSeleccionadas],
+      costoBase: totales.costoBase,
+      porcentajeGanancia: totales.porcentajeGanancia,
+      ganancia: totales.ganancia,
+      precioFinal: totales.precioFinal
+    };
+
+    if (inputId.value) {
+      const index = presupuestos.findIndex(p => p.id == id);
+      if (index >= 0) presupuestos[index] = nuevoPresupuesto;
+    } else {
+      presupuestos.push(nuevoPresupuesto);
+    }
+
+    localStorage.setItem('umai_presupuestos', JSON.stringify(presupuestos));
+    resetFormulario();
+    cargarTablaPresupuestos();
+  });
+
+  function resetFormulario() {
+    formPresupuesto.reset();
+    inputId.value = '';
+    recetasSeleccionadas = [];
+    inputFecha.value = new Date().toISOString().split('T')[0];
+    inputMargen.value = 50;
+    btnCancelar.style.display = 'none';
+    renderListaRecetas();
+  }
+
+  btnCancelar.addEventListener('click', resetFormulario);
+
+  // Cargar Tabla de Presupuestos
+  function cargarTablaPresupuestos() {
+    tablaPresupuestos.innerHTML = '';
+
+    if (presupuestos.length === 0) {
+      tablaPresupuestos.innerHTML = '<tr><td colspan="4" style="text-align: center; color: #64748b;">No hay presupuestos guardados.</td></tr>';
+      return;
+    }
+
+    presupuestos.forEach(p => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${p.fecha}</td>
+        <td><strong>${p.cliente}</strong></td>
+        <td>$${parseFloat(p.precioFinal || 0).toFixed(2)}</td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-action btn-ver" onclick="verPresupuesto(${p.id})" title="Ver Detalle">👁️</button>
+            <button class="btn-action btn-editar" onclick="descargarPDF(${p.id})" title="Descargar PDF" style="background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;">📄</button>
+            <button class="btn-action btn-editar" onclick="editarPresupuesto(${p.id})" title="Editar">✏️</button>
+            <button class="btn-action btn-borrar" onclick="eliminarPresupuesto(${p.id})" title="Borrar">🗑️</button>
+          </div>
+        </td>
+      `;
+      tablaPresupuestos.appendChild(tr);
+    });
+  }
+
+  // Modales
+  window.verPresupuesto = function(id) {
+    const p = presupuestos.find(item => item.id == id);
+    if (!p) return;
+
+    let itemsHtml = p.recetas.map(r => `
+      <li style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; padding-bottom: 0.4rem; border-bottom: 1px dashed #e2e8f0;">
+        <span><strong>${r.nombre}</strong> (x${r.cantidad})</span>
+        <span>$${(r.costoUnitario * r.cantidad).toFixed(2)}</span>
+      </li>
+    `).join('');
+
+    modalBody.innerHTML = `
+      <p style="margin-bottom: 0.5rem;"><strong>Cliente:</strong> ${p.cliente}</p>
+      <p style="margin-bottom: 1rem;"><strong>Fecha:</strong> ${p.fecha}</p>
+      <h4 style="margin-bottom: 0.5rem; font-size: 0.95rem;">Detalle de Recetas:</h4>
+      <ul style="list-style: none; padding: 0; margin-bottom: 1rem;">
+        ${itemsHtml}
+      </ul>
+      <div style="background-color: #f8fafc; padding: 0.75rem; border-radius: 8px; font-size: 0.9rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Costo Base:</span> <span>$${parseFloat(p.costoBase).toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Ganancia (${p.porcentajeGanancia}%):</span> <span>$${parseFloat(p.ganancia).toFixed(2)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-weight: 700; margin-top: 0.5rem; border-top: 1px solid #cbd5e1; padding-top: 0.5rem;">
+          <span>Precio Final:</span> <span>$${parseFloat(p.precioFinal).toFixed(2)}</span>
+        </div>
+      </div>
+      <div style="margin-top: 1rem; text-align: right;">
+        <button class="btn" onclick="descargarPDF(${p.id})" style="background-color: #10b981;">📄 Descargar PDF</button>
       </div>
     `;
 
-    div.querySelector('.btn-quitar').addEventListener('click', () => {
-      recetasAgregadas.splice(index, 1);
-      renderListaRecetas();
-      calcularPresupuesto();
-    });
-
-    listaRecetasContainer.appendChild(div);
-  });
-}
-
-// 3. Cálculo dinámico
-if (presupuestoMargen) {
-  presupuestoMargen.addEventListener('input', calcularPresupuesto);
-}
-
-function calcularPresupuesto() {
-  let costoProduccion = 0;
-
-  // Si hay lista dinámica de recetas
-  if (recetasAgregadas.length > 0) {
-    costoProduccion = recetasAgregadas.reduce((acc, r) => acc + (r.costoUnitario * r.cantidad), 0);
-  } else if (selectReceta && selectReceta.value) {
-    // Compatibilidad en caso de selección simple
-    const recetaBase = listaRecetasBase.find(r => r.id === selectReceta.value);
-    if (recetaBase) {
-      const mult = parseFloat(recetaCantidad.value) || 1;
-      costoProduccion = (parseFloat(recetaBase.costoTotal) || 0) * mult;
-    }
-  }
-
-  const margen = parseFloat(presupuestoMargen ? presupuestoMargen.value : 100) || 0;
-  const ganancia = costoProduccion * (margen / 100);
-  const precioFinal = costoProduccion + ganancia;
-
-  if (resumenCostoProduccion) resumenCostoProduccion.textContent = `$${costoProduccion.toFixed(2)}`;
-  if (resumenGanancia) resumenGanancia.textContent = `$${ganancia.toFixed(2)}`;
-  if (presupuestoPrecioFinal) presupuestoPrecioFinal.textContent = `$${precioFinal.toFixed(2)}`;
-
-  return { costoProduccion, ganancia, precioFinal };
-}
-
-// 4. Guardar / Actualizar Presupuesto
-formPresupuesto.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const calculos = calcularPresupuesto();
-  if (recetasAgregadas.length === 0 && (!selectReceta || !selectReceta.value)) {
-    alert("Por favor agregá al menos una receta al presupuesto.");
-    return;
-  }
-
-  const payload = {
-    fecha: presupuestoFecha ? presupuestoFecha.value : new Date().toISOString().split('T')[0],
-    cliente: presupuestoCliente.value.trim(),
-    recetas: recetasAgregadas.length > 0 ? recetasAgregadas : [{
-      recetaId: selectReceta.value,
-      nombre: selectReceta.options[selectReceta.selectedIndex].text.split(' ($')[0],
-      costoUnitario: calculos.costoProduccion / (parseFloat(recetaCantidad.value) || 1),
-      cantidad: parseFloat(recetaCantidad.value) || 1
-    }],
-    margen: parseFloat(presupuestoMargen.value) || 0,
-    costoProduccion: calculos.costoProduccion,
-    ganancia: calculos.ganancia,
-    precioFinal: calculos.precioFinal,
-    actualizadoAt: serverTimestamp()
+    modal.style.display = 'flex';
   };
 
-  const currentId = presupuestoIdHidden.value;
+  btnCerrarModal.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
 
-  try {
-    if (currentId) {
-      await updateDoc(doc(db, "presupuestos", currentId), payload);
-    } else {
-      payload.creadoAt = serverTimestamp();
-      await addDoc(collection(db, "presupuestos"), payload);
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  window.editarPresupuesto = function(id) {
+    const p = presupuestos.find(item => item.id == id);
+    if (!p) return;
+
+    inputId.value = p.id;
+    inputCliente.value = p.cliente;
+    inputFecha.value = p.fecha;
+    inputMargen.value = p.porcentajeGanancia;
+    recetasSeleccionadas = [...p.recetas];
+
+    btnCancelar.style.display = 'block';
+    renderListaRecetas();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  window.eliminarPresupuesto = function(id) {
+    if (confirm('¿Está seguro de eliminar este presupuesto?')) {
+      presupuestos = presupuestos.filter(p => p.id != id);
+      localStorage.setItem('umai_presupuestos', JSON.stringify(presupuestos));
+      cargarTablaPresupuestos();
     }
+  };
 
-    resetFormulario();
-  } catch (error) {
-    console.error("Error al procesar el presupuesto:", error);
-    alert("Ocurrió un error al guardar/actualizar el presupuesto.");
-  }
-});
+  // ==========================================
+  // GENERACIÓN DE PDF PROFESIONAL
+  // ==========================================
+  window.descargarPDF = function(id) {
+    const p = presupuestos.find(item => item.id == id);
+    if (!p) return;
 
-function resetFormulario() {
-  formPresupuesto.reset();
-  presupuestoIdHidden.value = '';
-  recetasAgregadas = [];
+    const factorGanancia = 1 + ((parseFloat(p.porcentajeGanancia) || 0) / 100);
 
-  if (presupuestoFecha) presupuestoFecha.value = new Date().toISOString().split('T')[0];
-  if (recetaCantidad) recetaCantidad.value = '1';
-  if (presupuestoMargen) presupuestoMargen.value = '100';
+    // Filas del PDF con precio venta público (incluyendo la ganancia implícita)
+    const filasTabla = p.recetas.map(r => {
+      const precioUnitarioVenta = r.costoUnitario * factorGanancia;
+      const subtotalVenta = precioUnitarioVenta * r.cantidad;
+      return `
+        <tr>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">${r.nombre}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 14px;">${r.cantidad}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px;">$${precioUnitarioVenta.toFixed(2)}</td>
+          <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px; font-weight: 600;">$${subtotalVenta.toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
 
-  formTitulo.textContent = '💼 Generar Nuevo Presupuesto';
-  btnSubmitPresupuesto.textContent = 'Guardar Presupuesto';
-  btnCancelarEdicion.style.display = 'none';
+    // Plantilla HTML del documento a exportar
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.padding = '30px';
+    pdfContainer.style.fontFamily = 'Arial, sans-serif';
+    pdfContainer.style.color = '#1e293b';
+    pdfContainer.style.backgroundColor = '#ffffff';
 
-  renderListaRecetas();
-  calcularPresupuesto();
-}
-
-btnCancelarEdicion.addEventListener('click', resetFormulario);
-
-// 5. Cargar Tabla de Presupuestos
-onSnapshot(collection(db, "presupuestos"), (snapshot) => {
-  tablaPresupuestos.innerHTML = '';
-
-  if (snapshot.empty) {
-    tablaPresupuestos.innerHTML = `
-      <tr>
-        <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
-          No se generaron presupuestos aún.
-        </td>
-      </tr>`;
-    return;
-  }
-
-  snapshot.docs.forEach(docSnap => {
-    const data = docSnap.data();
-    const id = docSnap.id;
-    const item = { id, ...data };
-
-    // Formatear texto de recetas
-    let resumenRecetas = '';
-    if (Array.isArray(data.recetas) && data.recetas.length > 0) {
-      resumenRecetas = data.recetas.map(r => `${r.nombre} (${r.cantidad})`).join(', ');
-    } else if (data.recetaNombre) {
-      resumenRecetas = `${data.recetaNombre} (${data.cantidad || 1})`;
-    } else {
-      resumenRecetas = 'N/A';
-    }
-
-    const fila = document.createElement('tr');
-    fila.innerHTML = `
-      <td>${data.fecha || 'N/A'}</td>
-      <td><strong>${data.cliente}</strong></td>
-      <td>${resumenRecetas}</td>
-      <td>$${parseFloat(data.costoProduccion || 0).toFixed(2)}</td>
-      <td><strong>$${parseFloat(data.precioFinal || 0).toFixed(2)}</strong></td>
-      <td style="text-align: center;">
-        <div class="action-btns" style="justify-content: center;">
-          <button class="btn-action btn-ver" title="Mirar">👁️</button>
-          <button class="btn-action btn-editar" title="Editar">✏️</button>
-          <button class="btn-action btn-eliminar" title="Borrar">🗑️</button>
+    pdfContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #5247e6; padding-bottom: 15px; margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img src="icon-192.png" alt="Logo" style="width: 60px; height: 60px; object-fit: contain;" />
+          <div>
+            <h1 style="margin: 0; color: #5247e6; font-size: 26px; text-transform: uppercase; letter-spacing: 1px;">PRESUPUESTO</h1>
+            <span style="font-size: 13px; color: #64748b;">Umai Recetas</span>
+          </div>
         </div>
-      </td>
+        <div style="text-align: right;">
+          <p style="margin: 0; font-size: 14px;"><strong>Fecha:</strong> ${p.fecha}</p>
+          <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>Presupuesto N°:</strong> #${p.id.toString().slice(-5)}</p>
+        </div>
+      </div>
+
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+        <p style="margin: 0; font-size: 15px;"><strong>Cliente:</strong> ${p.cliente}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+        <thead>
+          <tr style="background-color: #f1f5f9; color: #475569; text-align: left;">
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 13px;">DESCRIPCIÓN</th>
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: center; font-size: 13px;">CANT.</th>
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: right; font-size: 13px;">PRECIO UNIT.</th>
+            <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: right; font-size: 13px;">SUBTOTAL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${filasTabla}
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+        <div style="width: 250px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; text-align: right;">
+          <span style="font-size: 13px; color: #166534; display: block; margin-bottom: 5px;">TOTAL A PAGAR</span>
+          <span style="font-size: 22px; font-weight: 700; color: #15803d;">$${parseFloat(p.precioFinal).toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div style="margin-top: 50px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 12px; color: #94a3b8;">
+        Gracias por su confianza. Presupuesto válido por 15 días.
+      </div>
     `;
 
-    fila.querySelector('.btn-ver').addEventListener('click', () => verPresupuesto(item));
-    fila.querySelector('.btn-editar').addEventListener('click', () => editarPresupuesto(item));
-    fila.querySelector('.btn-eliminar').addEventListener('click', () => eliminarPresupuesto(id, data.cliente));
+    // Opciones de configuración de html2pdf
+    const opt = {
+      margin:       10,
+      filename:     `Presupuesto_${p.cliente.replace(/\s+/g, '_')}_${p.fecha}.pdf`,
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true },
+      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
 
-    tablaPresupuestos.appendChild(fila);
-  });
+    html2pdf().set(opt).from(pdfContainer).save();
+  };
+
+  // Inicialización
+  cargarSelectorRecetas();
+  cargarTablaPresupuestos();
 });
-
-// 6. Ver Presupuesto (Modal)
-function verPresupuesto(item) {
-  modalTitulo.textContent = `Presupuesto: ${item.cliente}`;
-
-  let listaHTML = '';
-  if (Array.isArray(item.recetas) && item.recetas.length > 0) {
-    listaHTML = '<ul style="margin: 0.5rem 0; padding-left: 1.2rem;">' +
-      item.recetas.map(r => `<li>${r.nombre} - Cant: ${r.cantidad} ($${(r.costoUnitario * r.cantidad).toFixed(2)})</li>`).join('') +
-      '</ul>';
-  } else {
-    listaHTML = `<p style="margin-bottom: 0.5rem;"><strong>Receta:</strong> ${item.recetaNombre || 'N/A'}</p>`;
-  }
-
-  modalBody.innerHTML = `
-    <p style="margin-bottom: 0.5rem;"><strong>Fecha:</strong> ${item.fecha || 'N/A'}</p>
-    <p style="margin-bottom: 0.5rem;"><strong>Cliente:</strong> ${item.cliente}</p>
-    <hr style="margin: 0.5rem 0;">
-    <p style="margin-bottom: 0.2rem;"><strong>Recetas Incluidas:</strong></p>
-    ${listaHTML}
-    <p style="margin-bottom: 0.5rem;"><strong>Margen Aplicado:</strong> ${item.margen}%</p>
-    <hr style="margin: 0.5rem 0;">
-    <p style="margin-bottom: 0.5rem;"><strong>Costo de Producción:</strong> $${parseFloat(item.costoProduccion || 0).toFixed(2)}</p>
-    <p style="margin-bottom: 0.5rem;"><strong>Ganancia Calculada:</strong> $${parseFloat(item.ganancia || 0).toFixed(2)}</p>
-    <p style="font-size: 1.1rem; font-weight: bold; margin-top: 0.5rem; color: #166534;">
-      Precio Final Sugerido: $${parseFloat(item.precioFinal || 0).toFixed(2)}
-    </p>
-  `;
-  modalDetalle.style.display = 'flex';
-}
-
-btnCerrarModal.addEventListener('click', () => modalDetalle.style.display = 'none');
-window.addEventListener('click', (e) => { if (e.target === modalDetalle) modalDetalle.style.display = 'none'; });
-
-// 7. Editar Presupuesto
-function editarPresupuesto(item) {
-  presupuestoIdHidden.value = item.id;
-  if (presupuestoFecha) presupuestoFecha.value = item.fecha || new Date().toISOString().split('T')[0];
-  presupuestoCliente.value = item.cliente;
-  presupuestoMargen.value = item.margen;
-
-  if (Array.isArray(item.recetas)) {
-    recetasAgregadas = [...item.recetas];
-  } else if (item.recetaId) {
-    recetasAgregadas = [{
-      recetaId: item.recetaId,
-      nombre: item.recetaNombre,
-      costoUnitario: item.costoProduccion / item.cantidad,
-      cantidad: item.cantidad
-    }];
-  } else {
-    recetasAgregadas = [];
-  }
-
-  formTitulo.textContent = '✏️ Editar Presupuesto';
-  btnSubmitPresupuesto.textContent = 'Actualizar Presupuesto';
-  btnCancelarEdicion.style.display = 'block';
-
-  renderListaRecetas();
-  calcularPresupuesto();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// 8. Eliminar Presupuesto
-async function eliminarPresupuesto(id, cliente) {
-  if (confirm(`¿Estás seguro de eliminar el presupuesto para "${cliente}"?`)) {
-    try {
-      await deleteDoc(doc(db, "presupuestos", id));
-    } catch (error) {
-      console.error("Error al eliminar presupuesto:", error);
-      alert("No se pudo eliminar el presupuesto.");
-    }
-  }
-}
