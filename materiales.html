@@ -69,13 +69,35 @@
       cursor: pointer; background-color: var(--btn-blue); color: white; transition: background-color 0.2s;
     }
     .btn:hover { background-color: var(--btn-blue-hover); }
+    .btn-secondary { background-color: #e2e8f0; color: var(--text-dark); }
+    .btn-secondary:hover { background-color: #cbd5e1; }
 
     /* Tabla */
     .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
     th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
     th { color: var(--text-muted); font-weight: 600; background-color: #f8fafc; }
-    .btn-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
+
+    /* Botones de Acción */
+    .action-btns { display: flex; gap: 0.4rem; }
+    .btn-action { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    .btn-action:hover { background-color: #e2e8f0; }
+
+    /* Estilos del Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white; padding: 1.5rem; border-radius: var(--radius);
+      width: 90%; max-width: 450px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .close-modal { font-size: 1.5rem; cursor: pointer; border: none; background: none; }
 
     @media (max-width: 640px) {
       navbar { flex-direction: column; gap: 0.75rem; padding: 1rem; }
@@ -98,8 +120,10 @@
 
   <main class="container">
     <section class="card">
-      <h2>🥄 Cargar Nuevo Material / Insumo</h2>
+      <h2 id="form-titulo">🥄 Cargar Nuevo Material / Insumo</h2>
       <form id="form-ingrediente">
+        <input type="hidden" id="ing-id">
+
         <div class="form-group">
           <label for="ing-nombre">Nombre del Material / Insumo</label>
           <input type="text" id="ing-nombre" placeholder="Ej: Azúcar, Huevos, Harina 0000" required>
@@ -125,7 +149,10 @@
           </div>
         </div>
 
-        <button type="submit" class="btn">Guardar Insumo</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button type="submit" id="btn-submit-ingrediente" class="btn" style="flex: 1;">Guardar Insumo</button>
+          <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary" style="display: none;">Cancelar</button>
+        </div>
       </form>
     </section>
 
@@ -149,6 +176,19 @@
       </div>
     </section>
   </main>
+
+  <!-- Modal para ver el detalle del insumo -->
+  <div id="modal-detalle" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Detalle del Insumo</h3>
+        <button class="close-modal" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <div id="modal-body">
+        <!-- Detalle renderizado con JS -->
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="js/materiales.js"></script>
 </body>
