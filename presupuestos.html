@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- ========================================== -->
+<!--    Programa: Umai Recetas                  -->
+<!--    Programo: Fernando Albornoz             -->
+<!--     Archivo: presupuestos.html             -->
+<!--     Version: 1.1 01-09-2026                -->
+<!-- ========================================== -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -11,42 +17,21 @@
   
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
   <link rel="stylesheet" href="css/styles.css">
-
-  <style>
-    /* Estilos del modal para ver presupuestos */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      justify-content: center; align-items: center;
-      z-index: 1000;
-    }
-    .modal-content {
-      background: white; padding: 1.5rem; border-radius: var(--radius);
-      width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-    .close-modal { font-size: 1.5rem; cursor: pointer; border: none; background: none; }
-    
-    /* Botones de acción */
-    .action-btns { display: flex; gap: 0.4rem; }
-    .btn-action { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.4rem; border-radius: 4px; }
-    .btn-action:hover { background-color: #e2e8f0; }
-  </style>
 </head>
 <body>
 
-  <navbar>
-    <div class="nav-brand">🎂 Umai</div>
-    <ul class="nav-links">
-      <li><a href="index.html">Panel</a></li>
-      <li><a href="recetas.html">Recetas</a></li>
-      <li><a href="materiales.html">Materiales</a></li>
-      <li><a href="presupuestos.html" class="active">Presupuestos</a></li>
-    </ul>
-  </navbar>
+  <!-- CABECERA DE NAVEGACIÓN BASE -->
+  <header class="app-header">
+    <div class="nav-brand">🎂 Umai by Sami</div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Panel</a></li>
+        <li><a href="recetas.html">Recetas</a></li>
+        <li><a href="materiales.html">Materiales</a></li>
+        <li><a href="presupuestos.html" class="active">Presupuestos</a></li>
+      </ul>
+    </nav>
+  </header>
 
   <main class="container">
     <section class="card">
@@ -54,7 +39,9 @@
       <form id="form-presupuesto">
         <input type="hidden" id="presupuesto-id">
 
-        <div class="grid-2-col">
+        <!-- Grilla de 3 columnas para Datos Principales -->
+        <div class="grid-3-col">
+          
           <div class="form-group">
             <label for="presupuesto-cliente">Nombre del Cliente</label>
             <input type="text" id="presupuesto-cliente" placeholder="Ej: María Gómez" required>
@@ -65,6 +52,10 @@
               <option value="">-- Seleccionar Receta --</option>
             </select>
           </div>
+		  <div class="form-group">
+            <label for="presupuesto-fecha">Fecha</label>
+            <input type="date" id="presupuesto-fecha" required>
+          </div>	
         </div>
 
         <div class="grid-2-col">
@@ -108,6 +99,7 @@
         <table>
           <thead>
             <tr>
+              <th>Fecha</th>
               <th>Cliente</th>
               <th>Receta</th>
               <th>Cant.</th>
@@ -138,5 +130,22 @@
   </div>
 
   <script type="module" src="js/presupuestos.js"></script>
+
+  <!-- PIE DE PÁGINA BASE -->
+  <footer class="app-footer">
+    <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
+  </footer>
+
+  <!-- Script para setear fecha actual por defecto -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputFecha = document.getElementById('presupuesto-fecha');
+      if (inputFecha && !inputFecha.value) {
+        inputFecha.valueToDate = new Date();
+        inputFecha.value = new Date().toISOString().split('T')[0];
+      }
+    });
+  </script>
+
 </body>
 </html>

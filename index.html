@@ -1,4 +1,10 @@
 <!DOCTYPE html>
+<!-- ========================================== -->
+<!--    Programa: Umai Recetas                  -->
+<!--    Programo: Fernando Albornoz             -->
+<!--     Archivo: index.html                    -->
+<!--     Version: 1.0 01-09-2026                -->
+<!-- ========================================== -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -12,209 +18,23 @@
   
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
 
-  <style>
-    :root {
-      --primary-purple: #635bff;
-      --nav-bg: #5247e6;
-      --bg-body: #f4f5f9;
-      --card-bg: #ffffff;
-      --text-dark: #1e293b;
-      --text-muted: #64748b;
-      --btn-blue: #0073ff;
-      --btn-blue-hover: #005bb5;
-      --radius: 16px;
-      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.03);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-body);
-      color: var(--text-dark);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Barra de Navegación */
-    navbar {
-      background-color: var(--nav-bg);
-      color: white;
-      padding: 0.85rem 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .nav-brand {
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      list-style: none;
-    }
-
-    .nav-links a {
-      color: rgba(255, 255, 255, 0.85);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      padding: 0.4rem 0.8rem;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .nav-links a:hover, .nav-links a.active {
-      color: white;
-      background-color: rgba(255, 255, 255, 0.18);
-    }
-
-    /* Header del Panel */
-    .hero-header {
-      text-align: center;
-      padding: 3rem 1rem 1.5rem 1rem;
-    }
-
-    .hero-header h1 {
-      font-size: 2.1rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      margin-bottom: 0.5rem;
-    }
-
-    .hero-header p {
-      font-size: 1rem;
-      color: var(--text-muted);
-    }
-
-    /* Contenedor de Tarjetas */
-    .main-container {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 1.5rem;
-      width: 100%;
-      flex: 1;
-    }
-
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-top: 1rem;
-    }
-
-    /* Tarjetas Individuales */
-    .card-item {
-      background: var(--card-bg);
-      border-radius: var(--radius);
-      padding: 2.5rem 1.75rem;
-      text-align: center;
-      box-shadow: var(--shadow);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      border: 1px solid rgba(226, 232, 240, 0.8);
-    }
-
-    .card-item:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    }
-
-    .card-icon {
-      font-size: 3rem;
-      margin-bottom: 1.25rem;
-      display: inline-block;
-    }
-
-    .card-title {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      margin-bottom: 0.75rem;
-    }
-
-    .card-description {
-      font-size: 0.92rem;
-      color: var(--text-muted);
-      line-height: 1.5;
-      margin-bottom: 1.75rem;
-    }
-
-    .btn-action {
-      background-color: var(--btn-blue);
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.95rem;
-      padding: 0.75rem 1.75rem;
-      border-radius: 8px;
-      transition: background-color 0.2s ease;
-      display: inline-block;
-      width: 100%;
-      max-width: 180px;
-      box-shadow: 0 2px 4px rgba(0, 115, 255, 0.2);
-    }
-
-    .btn-action:hover {
-      background-color: var(--btn-blue-hover);
-    }
-
-    /* Responsivo */
-    @media (max-width: 640px) {
-      navbar {
-        flex-direction: column;
-        gap: 0.75rem;
-        padding: 1rem;
-      }
-      
-      .nav-links {
-        width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .hero-header h1 {
-        font-size: 1.75rem;
-      }
-
-      .cards-grid {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
-      }
-    }
-  </style>
+  <!-- Hoja de Estilos Principal -->
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
-  <!-- Navegación Superior -->
-  <navbar>
-    <div class="nav-brand">
-      <span>🎂 Umai by Sami</span>
-    </div>
-    <ul class="nav-links">
-      <li><a href="index.html" class="active">Panel</a></li>
-      <li><a href="recetas.html">Recetas</a></li>
-      <li><a href="materiales.html">Materiales</a></li>
-      <li><a href="presupuestos.html">Presupuestos</a></li>
-    </ul>
-  </navbar>
+  <!-- CABECERA DE NAVEGACIÓN BASE -->
+  <header class="app-header">
+    <div class="nav-brand">🎂 Umai by Sami</div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Panel</a></li>
+        <li><a href="recetas.html">Recetas</a></li>
+        <li><a href="materiales.html">Materiales</a></li>
+        <li><a href="presupuestos.html">Presupuestos</a></li>
+      </ul>
+    </nav>
+  </header>
 
   <!-- Encabezado Principal -->
   <div class="hero-header">
@@ -258,6 +78,11 @@
 
     </div>
   </main>
+
+  <!-- PIE DE PÁGINA BASE -->
+  <footer class="app-footer">
+    <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
+  </footer>
 
 </body>
 </html>
