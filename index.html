@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Recetario & Costos</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="manifest.json">
+
+  <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --border-color: #e2e8f0;
+      --success-bg: #f0fdf4;
+      --success-text: #166534;
+      --radius: 12px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-main);
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 900px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .grid-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid-container {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      border-bottom: 2px solid var(--bg-primary);
+      padding-bottom: 0.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+    }
+
+    .grid-2-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .btn {
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: #e2e8f0;
+    }
+
+    .resumen-card {
+      background-color: var(--success-bg);
+      border: 1px solid #bbf7d0;
+      border-radius: var(--radius);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .resumen-card p {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .resumen-card p.total-destacado {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--success-text);
+      border-top: 1px dashed #a7f3d0;
+      padding-top: 0.5rem;
+      margin-top: 0.25rem;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border-color);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    <header>
+      <h1>Costos & Recetas</h1>
+    </header>
+
+    <div class="grid-container">
+      
+      <section class="card">
+        <h2>1. Registrar Insumo Base</h2>
+        <form id="form-ingrediente" class="form-group">
+          
+          <div class="form-group">
+            <label for="ing-nombre">Nombre del producto</label>
+            <input type="text" id="ing-nombre" placeholder="Ej: Azúcar, Huevos, Pack Cajas" required>
+          </div>
+
+          <div class="form-group">
+            <label for="ing-unidad">Unidad de Medida</label>
+            <select id="ing-unidad">
+              <option value="g">Gramos (g)</option>
+              <option value="ml">Mililitros (ml)</option>
+              <option value="un">Unidad / Pieza (un)</option>
+            </select>
+          </div>
+
+          <div class="grid-2-col">
+            <div class="form-group">
+              <label for="ing-cantidad">Cant. Comprada</label>
+              <input type="number" step="any" id="ing-cantidad" placeholder="Ej: 1000" required>
+            </div>
+            <div class="form-group">
+              <label for="ing-precio">Precio Pagado ($)</label>
+              <input type="number" step="any" id="ing-precio" placeholder="Ej: 1300" required>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary">Guardar Insumo</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>2. Calcular Receta</h2>
+        
+        <div class="form-group">
+          <label for="receta-nombre">Nombre de la Receta</label>
+          <input type="text" id="receta-nombre" placeholder="Ej: Lemon Pie 22cm">
+        </div>
+
+        <div id="contenedor-ingredientes-receta" class="form-group">
+          </div>
+
+        <button type="button" id="btn-agregar-ingrediente" class="btn btn-secondary">+ Agregar Insumo a la Receta</button>
+
+        <hr>
+
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="receta-horas">Hs. Mano de Obra</label>
+            <input type="number" step="any" id="receta-horas" value="0">
+          </div>
+          <div class="form-group">
+            <label for="receta-precio-hora">Costo por Hora ($)</label>
+            <input type="number" step="any" id="receta-precio-hora" value="0">
+          </div>
+        </div>
+
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="receta-otros">Otros (Packaging/Gas)</label>
+            <input type="number" step="any" id="receta-otros" value="0">
+          </div>
+          <div class="form-group">
+            <label for="receta-ganancia">% Ganancia</label>
+            <input type="number" step="any" id="receta-ganancia" value="100">
+          </div>
+        </div>
+
+        <div class="resumen-card">
+          <p>Costo Insumos: <span id="val-costo-insumos">$0.00</span></p>
+          <p>Mano de Obra: <span id="val-costo-mano-obra">$0.00</span></p>
+          <p>Costo Total Producción: <span id="val-costo-total">$0.00</span></p>
+          <p class="total-destacado">Precio Venta Sugerido: <span id="val-precio-venta">$0.00</span></p>
+        </div>
+
+        <button type="button" id="btn-guardar-receta" class="btn btn-primary">Guardar Receta</button>
+      </section>
+
+    </div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
