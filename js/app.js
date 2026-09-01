@@ -162,10 +162,11 @@ function calcularTotales() {
   const totalManoObra = hsManoObra * precioHora;
 
   const otros = parseFloat(recetaOtros.value) || 0;
-  const %Ganancia = parseFloat(recetaGanancia.value) || 0;
+// ✅ CORRECTO
+  const porcentajeGanancia = parseFloat(recetaGanancia.value) || 0;
 
   const costoTotalProduccion = acumuladoInsumos + totalManoObra + otros;
-  const precioVentaSugerido = costoTotalProduccion * (1 + (%Ganancia / 100));
+  const precioVentaSugerido = costoTotalProduccion * (1 + (porcentajeGanancia / 100));
 
   // Actualizar UI
   valCostoInsumos.textContent = `$${acumuladoInsumos.toFixed(2)}`;
