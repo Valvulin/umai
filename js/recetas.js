@@ -2,14 +2,17 @@ import { db } from './firebase-config.js';
 import { 
   collection, 
   addDoc, 
+  updateDoc,
   deleteDoc, 
   doc, 
   onSnapshot, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// Elementos del DOM
+// DOM
 const formReceta = document.getElementById('form-receta');
+const formTitulo = document.getElementById('form-titulo');
+const recetaIdHidden = document.getElementById('receta-id');
 const recetaNombre = document.getElementById('receta-nombre');
 const recetaRendimiento = document.getElementById('receta-rendimiento');
 
@@ -26,12 +29,22 @@ const resumenCostoInsumos = document.getElementById('resumen-costo-insumos');
 const resumenCostoManoObra = document.getElementById('resumen-costo-mano-obra');
 const resumenCostoPackaging = document.getElementById('resumen-costo-packaging');
 const costoTotalRecetaEl = document.getElementById('costo-total-receta');
+
+const btnSubmitReceta = document.getElementById('btn-submit-receta');
+const btnCancelarEdicion = document.getElementById('btn-cancelar-edicion');
 const tablaRecetas = document.getElementById('tabla-recetas');
 
-let inventarioInsumos = []; // Copia de los insumos de Firestore
-let insumosEnReceta = [];   // Insumos agregados a la receta actual
+// Modal
+const modalDetalle = document.getElementById('modal-detalle');
+const modalTitulo = document.getElementById('modal-titulo');
+const modalBody = document.getElementById('modal-body');
+const btnCerrarModal = document.getElementById('btn-cerrar-modal');
 
-// 1. Cargar insumos desde Firestore para llenar el selector
+let inventarioInsumos = [];
+let insumosEnReceta = [];
+let listaRecetasLocales = [];
+
+// 1. Cargar Insumos
 onSnapshot(collection(db, "ingredientes"), (snapshot) => {
   inventarioInsumos = [];
   selectInsumo.innerHTML = '<option value="">-- Seleccionar Insumo --</option>';
@@ -47,7 +60,7 @@ onSnapshot(collection(db, "ingredientes"), (snapshot) => {
   });
 });
 
-// 2. Agregar insumo a la receta
+// 2. Agregar Insumo temporal
 btnAgregarInsumo.addEventListener('click', () => {
   const insumoId = selectInsumo.value;
   const cantidad = parseFloat(insumoCantidad.value);
@@ -77,12 +90,10 @@ btnAgregarInsumo.addEventListener('click', () => {
   calcularTotalesYRenderizar();
 });
 
-// Escuchar cambios en los inputs de Mano de Obra y Packaging
 recetaHoras.addEventListener('input', calcularTotalesYRenderizar);
 recetaPrecioHora.addEventListener('input', calcularTotalesYRenderizar);
 recetaPackaging.addEventListener('input', calcularTotalesYRenderizar);
 
-// Recalcular todos los subtotales y total final
 function calcularTotalesYRenderizar() {
   listaInsumosReceta.innerHTML = '';
   let subtotalInsumos = 0;
@@ -118,7 +129,7 @@ function calcularTotalesYRenderizar() {
   costoTotalRecetaEl.textContent = `$${costoTotal.toFixed(2)}`;
 }
 
-// 3. Guardar Receta Completa en Firestore
+// 3. Guardar / Actualizar Receta
 formReceta.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -135,7 +146,7 @@ formReceta.addEventListener('submit', async (e) => {
   const costoManoObra = horas * precioHora;
   const costoTotalCalculado = subtotalInsumos + costoManoObra + packaging;
 
-  const nuevaReceta = {
+  const payload = {
     nombre: recetaNombre.value.trim(),
     rendimiento: recetaRendimiento.value.trim(),
     insumos: insumosEnReceta,
@@ -145,28 +156,47 @@ formReceta.addEventListener('submit', async (e) => {
     costoManoObra: costoManoObra,
     costoPackaging: packaging,
     costoTotal: costoTotalCalculado,
-    creadoAt: serverTimestamp()
+    actualizadoAt: serverTimestamp()
   };
 
+  const currentId = recetaIdHidden.value;
+
   try {
-    await addDoc(collection(db, "recetas"), nuevaReceta);
+    if (currentId) {
+      await updateDoc(doc(db, "recetas", currentId), payload);
+    } else {
+      payload.creadoAt = serverTimestamp();
+      await addDoc(collection(db, "recetas"), payload);
+    }
     
-    // Resetear formulario
-    formReceta.reset();
-    insumosEnReceta = [];
-    recetaHoras.value = '0';
-    recetaPrecioHora.value = '0';
-    recetaPackaging.value = '0';
-    calcularTotalesYRenderizar();
+    resetFormulario();
   } catch (error) {
-    console.error("Error al guardar la receta:", error);
-    alert("Ocurrió un error al guardar la receta.");
+    console.error("Error al procesar la receta:", error);
+    alert("Ocurrió un error al guardar/actualizar.");
   }
 });
 
-// 4. Escuchar y mostrar recetas guardadas desde Firestore
+function resetFormulario() {
+  formReceta.reset();
+  recetaIdHidden.value = '';
+  insumosEnReceta = [];
+  recetaHoras.value = '0';
+  recetaPrecioHora.value = '0';
+  recetaPackaging.value = '0';
+  
+  formTitulo.textContent = '📖 Nueva Receta Base';
+  btnSubmitReceta.textContent = 'Guardar Receta';
+  btnCancelarEdicion.style.display = 'none';
+
+  calcularTotalesYRenderizar();
+}
+
+btnCancelarEdicion.addEventListener('click', resetFormulario);
+
+// 4. Renderizar Lista de Recetas
 onSnapshot(collection(db, "recetas"), (snapshot) => {
   tablaRecetas.innerHTML = '';
+  listaRecetasLocales = [];
 
   if (snapshot.empty) {
     tablaRecetas.innerHTML = `
@@ -181,6 +211,8 @@ onSnapshot(collection(db, "recetas"), (snapshot) => {
   snapshot.docs.forEach(docSnap => {
     const data = docSnap.data();
     const id = docSnap.id;
+    const receta = { id, ...data };
+    listaRecetasLocales.push(receta);
 
     const cantidadInsumos = data.insumos ? data.insumos.length : 0;
     const costo = data.costoTotal ? parseFloat(data.costoTotal).toFixed(2) : '0.00';
@@ -194,29 +226,76 @@ onSnapshot(collection(db, "recetas"), (snapshot) => {
       <td>${cantidadInsumos} ítem(s)</td>
       <td><strong>$${costo}</strong></td>
       <td>
-        <button class="btn-delete" data-id="${id}">Eliminar</button>
+        <div class="action-btns">
+          <button class="btn-action btn-ver" title="Ver detalle">👁️</button>
+          <button class="btn-action btn-editar" title="Editar">✏️</button>
+          <button class="btn-action btn-eliminar" title="Eliminar">🗑️</button>
+        </div>
       </td>
     `;
 
-    fila.querySelector('.btn-delete').addEventListener('click', () => eliminarReceta(id, data.nombre));
+    fila.querySelector('.btn-ver').addEventListener('click', () => verReceta(receta));
+    fila.querySelector('.btn-editar').addEventListener('click', () => editarReceta(receta));
+    fila.querySelector('.btn-eliminar').addEventListener('click', () => eliminarReceta(id, data.nombre));
 
     tablaRecetas.appendChild(fila);
   });
 });
 
-// 5. Eliminar receta
+// Modal Actions
+function verReceta(receta) {
+  modalTitulo.textContent = receta.nombre;
+  
+  let htmlInsumos = receta.insumos.map(i => 
+    `<li>${i.nombre}: ${i.cantidad} ${i.unidad} ($${parseFloat(i.costoCalculado).toFixed(2)})</li>`
+  ).join('');
+
+  modalBody.innerHTML = `
+    <p><strong>Rendimiento:</strong> ${receta.rendimiento}</p>
+    <hr style="margin: 0.5rem 0;">
+    <p><strong>Ingredientes:</strong></p>
+    <ul style="padding-left: 1.2rem; margin-bottom: 0.5rem;">${htmlInsumos}</ul>
+    <hr style="margin: 0.5rem 0;">
+    <p><strong>Tiempo:</strong> ${receta.horasTrabajo || 0} hs ($${parseFloat(receta.costoManoObra || 0).toFixed(2)})</p>
+    <p><strong>Packaging / Varios:</strong> $${parseFloat(receta.costoPackaging || 0).toFixed(2)}</p>
+    <p style="font-size: 1.1rem; font-weight: bold; margin-top: 0.5rem; color: #166534;">
+      Costo Total: $${parseFloat(receta.costoTotal).toFixed(2)}
+    </p>
+  `;
+
+  modalDetalle.style.display = 'flex';
+}
+
+btnCerrarModal.addEventListener('click', () => modalDetalle.style.display = 'none');
+window.addEventListener('click', (e) => { if (e.target === modalDetalle) modalDetalle.style.display = 'none'; });
+
+// Editar
+function editarReceta(receta) {
+  recetaIdHidden.value = receta.id;
+  recetaNombre.value = receta.nombre;
+  recetaRendimiento.value = receta.rendimiento;
+  recetaHoras.value = receta.horasTrabajo || 0;
+  recetaPrecioHora.value = receta.precioHora || 0;
+  recetaPackaging.value = receta.costoPackaging || 0;
+
+  insumosEnReceta = [...(receta.insumos || [])];
+
+  formTitulo.textContent = '✏️ Editar Receta';
+  btnSubmitReceta.textContent = 'Actualizar Receta';
+  btnCancelarEdicion.style.display = 'block';
+
+  calcularTotalesYRenderizar();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Eliminar
 async function eliminarReceta(id, nombre) {
   if (confirm(`¿Estás seguro de eliminar la receta "${nombre}"?`)) {
     try {
-      await deleteDoc(doc(doc(db, "recetas", id).path));
+      await deleteDoc(doc(db, "recetas", id));
     } catch (error) {
-      // Fallback standard para deleteDoc
-      try {
-        await deleteDoc(doc(db, "recetas", id));
-      } catch (err) {
-        console.error("Error al eliminar receta:", err);
-        alert("No se pudo eliminar la receta.");
-      }
+      console.error("Error al eliminar la receta:", error);
+      alert("No se pudo eliminar la receta.");
     }
   }
 }

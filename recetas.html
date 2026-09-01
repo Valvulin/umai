@@ -11,6 +11,30 @@
   
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
   <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    /* Estilos del modal para ver recetas */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center; align-items: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: white; padding: 1.5rem; border-radius: var(--radius);
+      width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto;
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .close-modal { font-size: 1.5rem; cursor: pointer; border: none; background: none; }
+    
+    /* Botones de acción */
+    .action-btns { display: flex; gap: 0.4rem; }
+    .btn-action { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 0.2rem 0.4rem; border-radius: 4px; }
+    .btn-action:hover { background-color: #e2e8f0; }
+  </style>
 </head>
 <body>
 
@@ -25,10 +49,12 @@
   </navbar>
 
   <main class="container">
-    <!-- Formulario de creación de receta -->
+    <!-- Formulario de creación/edición de receta -->
     <section class="card">
-      <h2>📖 Nueva Receta Base</h2>
+      <h2 id="form-titulo">📖 Nueva Receta Base</h2>
       <form id="form-receta">
+        <input type="hidden" id="receta-id">
+
         <div class="grid-2-col">
           <div class="form-group">
             <label for="receta-nombre">Nombre de la Receta</label>
@@ -56,7 +82,6 @@
           </div>
         </div>
 
-        <!-- Detalle dinámico de insumos cargados -->
         <div id="lista-insumos-receta" style="margin-bottom: 1.5rem;">
           <!-- Se agregan dinámicamente -->
         </div>
@@ -68,7 +93,7 @@
           <div class="grid-2-col" style="margin-top: 0.75rem;">
             <div class="form-group">
               <label for="receta-horas">Horas de Trabajo (Tiempo de Elaboración)</label>
-              <input type="number" step="any" id="receta-horas" placeholder="Ej: 1.5 (1 hs y media)" value="0" min="0">
+              <input type="number" step="any" id="receta-horas" placeholder="Ej: 1.5" value="0" min="0">
             </div>
             <div class="form-group">
               <label for="receta-precio-hora">Valor de la Hora de Trabajo ($)</label>
@@ -78,11 +103,11 @@
 
           <div class="form-group">
             <label for="receta-packaging">Gastos Adicionales / Packaging / Servicios ($)</label>
-            <input type="number" step="any" id="receta-packaging" placeholder="Ej: 500 (caja, blonda, gas/luz)" value="0" min="0">
+            <input type="number" step="any" id="receta-packaging" placeholder="Ej: 500" value="0" min="0">
           </div>
         </div>
 
-        <!-- Resumen de Costos Estratificado -->
+        <!-- Resumen de Costos -->
         <div class="costo-resumen">
           <div class="costo-row">
             <span>Costo Insumos Directos:</span>
@@ -102,7 +127,10 @@
           </div>
         </div>
 
-        <button type="submit" class="btn" style="margin-top: 1rem; width: 100%;">Guardar Receta</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button type="submit" id="btn-submit-receta" class="btn" style="flex: 1;">Guardar Receta</button>
+          <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary" style="display: none;">Cancelar</button>
+        </div>
       </form>
     </section>
 
@@ -122,12 +150,25 @@
             </tr>
           </thead>
           <tbody id="tabla-recetas">
-            <!-- Se carga dinámicamente desde Firestore -->
+            <!-- Se carga dinámicamente -->
           </tbody>
         </table>
       </div>
     </section>
   </main>
+
+  <!-- Modal para ver el detalle de la receta -->
+  <div id="modal-detalle" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modal-titulo">Detalle de Receta</h3>
+        <button class="close-modal" id="btn-cerrar-modal">&times;</button>
+      </div>
+      <div id="modal-body">
+        <!-- Contenido detallado -->
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="js/recetas.js"></script>
 </body>
