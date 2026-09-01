@@ -3,7 +3,7 @@
 <!--    Programa: Umai Recetas                  -->
 <!--    Programo: Fernando Albornoz             -->
 <!--     Archivo: presupuestos.html             -->
-<!--     Version: 1.1 01-09-2026                -->
+<!--     Version: 1.2 01-09-2026                -->
 <!-- ========================================== -->
 <html lang="es">
 <head>
@@ -39,34 +39,43 @@
       <form id="form-presupuesto">
         <input type="hidden" id="presupuesto-id">
 
-        <!-- Grilla de 3 columnas para Datos Principales -->
-        <div class="grid-3-col">
-          
+        <!-- Datos Principales -->
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="presupuesto-fecha">Fecha</label>
+            <input type="date" id="presupuesto-fecha" required>
+          </div>
           <div class="form-group">
             <label for="presupuesto-cliente">Nombre del Cliente</label>
             <input type="text" id="presupuesto-cliente" placeholder="Ej: María Gómez" required>
           </div>
-          <div class="form-group">
-            <label for="presupuesto-receta">Receta Base</label>
-            <select id="presupuesto-receta" required>
-              <option value="">-- Seleccionar Receta --</option>
-            </select>
-          </div>
-		  <div class="form-group">
-            <label for="presupuesto-fecha">Fecha</label>
-            <input type="date" id="presupuesto-fecha" required>
-          </div>	
         </div>
 
-        <div class="grid-2-col">
-          <div class="form-group">
-            <label for="presupuesto-cantidad">Cantidad / Multiplicador</label>
-            <input type="number" step="any" id="presupuesto-cantidad" value="1" min="0.1" required>
+        <!-- Selector Dinámico de Recetas Multiples -->
+        <div style="margin: 1.5rem 0 1rem 0; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Recetas a Presupuestar</label>
+          <div class="grid-3-col" style="margin-top: 0.5rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <select id="select-receta">
+                <option value="">-- Seleccionar Receta --</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <input type="number" step="any" id="receta-cantidad" placeholder="Cantidad / Multiplicador" value="1" min="0.1">
+            </div>
+            <button type="button" id="btn-agregar-receta" class="btn btn-secondary">+ Agregar Receta</button>
           </div>
-          <div class="form-group">
-            <label for="presupuesto-margen">Margen de Ganancia (%)</label>
-            <input type="number" step="any" id="presupuesto-margen" placeholder="Ej: 100" value="100" min="0" required>
-          </div>
+        </div>
+
+        <!-- Lista de Recetas Agregadas al Presupuesto -->
+        <div id="lista-recetas-presupuesto" style="margin-bottom: 1.5rem;">
+          <!-- Se agregan dinámicamente con JS -->
+        </div>
+
+        <!-- Margen de Ganancia -->
+        <div class="form-group" style="border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label for="presupuesto-margen">Margen de Ganancia (%)</label>
+          <input type="number" step="any" id="presupuesto-margen" placeholder="Ej: 100" value="100" min="0" required>
         </div>
 
         <!-- Resumen de Totales del Presupuesto -->
@@ -101,8 +110,7 @@
             <tr>
               <th>Fecha</th>
               <th>Cliente</th>
-              <th>Receta</th>
-              <th>Cant.</th>
+              <th>Recetas</th>
               <th>Costo Total</th>
               <th>Precio Final</th>
               <th>Acciones</th>
@@ -136,12 +144,10 @@
     <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
   </footer>
 
-  <!-- Script para setear fecha actual por defecto -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const inputFecha = document.getElementById('presupuesto-fecha');
       if (inputFecha && !inputFecha.value) {
-        inputFecha.valueToDate = new Date();
         inputFecha.value = new Date().toISOString().split('T')[0];
       }
     });
