@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Umai - Presupuestos y Cotizaciones</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
+
+  <style>
+    :root {
+      --nav-bg: #5247e6;
+      --bg-body: #f4f5f9;
+      --card-bg: #ffffff;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --btn-blue: #0073ff;
+      --btn-blue-hover: #005bb5;
+      --border-color: #e2e8f0;
+      --radius: 12px;
+      --danger: #ef4444;
+      --success: #10b981;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', system-ui, sans-serif; }
+    body { background-color: var(--bg-body); color: var(--text-dark); min-height: 100vh; }
+
+    navbar {
+      background-color: var(--nav-bg);
+      color: white;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { font-size: 1.4rem; font-weight: 700; }
+    .nav-links { display: flex; gap: 0.75rem; list-style: none; }
+    .nav-links a {
+      color: rgba(255, 255, 255, 0.85); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+      padding: 0.4rem 0.8rem; border-radius: 8px; transition: all 0.2s;
+    }
+    .nav-links a:hover, .nav-links a.active { color: white; background-color: rgba(255, 255, 255, 0.18); }
+
+    .container { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    .card {
+      background: var(--card-bg); border-radius: var(--radius); padding: 1.5rem;
+      border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      margin-bottom: 1.5rem;
+    }
+    .card h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; border-bottom: 2px solid var(--bg-body); padding-bottom: 0.5rem; }
+
+    .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+    .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); }
+    input, select {
+      width: 100%; padding: 0.75rem; border: 1px solid var(--border-color);
+      border-radius: 8px; font-size: 0.95rem; outline: none;
+    }
+    input:focus, select:focus { border-color: var(--btn-blue); }
+    .grid-2-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .grid-3-col { display: grid; grid-template-columns: 2fr 1fr auto; gap: 0.75rem; align-items: end; }
+
+    .btn {
+      padding: 0.75rem 1.25rem; border: none; border-radius: 8px; font-weight: 600;
+      cursor: pointer; background-color: var(--btn-blue); color: white; transition: background-color 0.2s;
+    }
+    .btn:hover { background-color: var(--btn-blue-hover); }
+    .btn-secondary { background-color: #e2e8f0; color: var(--text-dark); }
+    .btn-secondary:hover { background-color: #cbd5e1; }
+
+    .receta-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 0.6rem 0.8rem; background-color: #f8fafc; border-radius: 6px;
+      margin-bottom: 0.5rem; border: 1px solid var(--border-color);
+    }
+
+    .costo-resumen {
+      display: flex; flex-direction: column; gap: 0.5rem;
+      background-color: #f0fdf4; border: 1px solid #bbf7d0; padding: 1rem;
+      border-radius: 8px; margin-top: 1rem; color: #166534;
+    }
+    .costo-row { display: flex; justify-content: space-between; font-size: 0.95rem; }
+    .costo-total-final { font-size: 1.2rem; font-weight: 700; border-top: 1px dashed #bbf7d0; padding-top: 0.5rem; }
+
+    .table-responsive { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    th, td { text-align: left; padding: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    th { color: var(--text-muted); font-weight: 600; background-color: #f8fafc; }
+    .btn-delete { background: none; border: none; color: var(--danger); cursor: pointer; font-weight: 600; }
+
+    @media (max-width: 640px) {
+      navbar { flex-direction: column; gap: 0.75rem; padding: 1rem; }
+      .nav-links { width: 100%; justify-content: center; flex-wrap: wrap; }
+      .grid-2-col, .grid-3-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <navbar>
+    <div class="nav-brand">🎂 Umai</div>
+    <ul class="nav-links">
+      <li><a href="index.html">Panel</a></li>
+      <li><a href="recetas.html">Recetas</a></li>
+      <li><a href="materiales.html">Materiales</a></li>
+      <li><a href="presupuestos.html" class="active">Presupuestos</a></li>
+    </ul>
+  </navbar>
+
+  <main class="container">
+    <section class="card">
+      <h2>📋 Generar Presupuesto / Cotización</h2>
+      <form id="form-presupuesto">
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="pres-cliente">Nombre del Cliente / Evento</label>
+            <input type="text" id="pres-cliente" placeholder="Ej: Cumpleaños Laura" required>
+          </div>
+          <div class="form-group">
+            <label for="pres-fecha">Fecha del Evento</label>
+            <input type="date" id="pres-fecha" required>
+          </div>
+        </div>
+
+        <div style="margin: 1.2rem 0 1rem 0;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Seleccionar Recetas</label>
+          <div class="grid-3-col" style="margin-top: 0.5rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <select id="select-receta">
+                <option value="">-- Seleccionar Receta --</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <input type="number" id="receta-cantidad" placeholder="Cant. lotes" min="1" value="1">
+            </div>
+            <button type="button" id="btn-agregar-receta" class="btn btn-secondary">+ Agregar</button>
+          </div>
+        </div>
+
+        <div id="lista-recetas-presupuesto" style="margin-bottom: 1rem;">
+          <!-- Recetas agregadas al pedido -->
+        </div>
+
+        <div class="grid-2-col">
+          <div class="form-group">
+            <label for="pres-margen">Margen de Ganancia (%)</label>
+            <input type="number" id="pres-margen" value="100" placeholder="100" min="0">
+          </div>
+          <div class="form-group">
+            <label for="pres-extras">Gastos Extra / Packaging ($)</label>
+            <input type="number" id="pres-extras" value="0" placeholder="0" min="0">
+          </div>
+        </div>
+
+        <div class="costo-resumen">
+          <div class="costo-row">
+            <span>Costo de Producción:</span>
+            <span id="resumen-costo-base">$0.00</span>
+          </div>
+          <div class="costo-row">
+            <span>Gastos Extra / Packaging:</span>
+            <span id="resumen-extras">$0.00</span>
+          </div>
+          <div class="costo-row costo-total-final">
+            <span>Precio Sugerido al Cliente:</span>
+            <span id="resumen-precio-final">$0.00</span>
+          </div>
+        </div>
+
+        <button type="submit" class="btn" style="margin-top: 1rem; width: 100%;">Guardar Presupuesto</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Presupuestos Históricos</h2>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Fecha Evento</th>
+              <th>Costo Base</th>
+              <th>Precio Final</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-presupuestos">
+            <!-- Cargado dinámicamente -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/presupuestos.js"></script>
+</body>
+</html>
