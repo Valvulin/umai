@@ -7,7 +7,7 @@
 
 :root {
   --primary-purple: #635bff;
-  --nav-bg: #5247e6;
+  --nav-bg: #f4cccc; /* #5247e6; */
   --bg-body: #65876e; /* f4f5f9; */
   --card-bg: #ffffff;
   --text-dark: #1e293b;
