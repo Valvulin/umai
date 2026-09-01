@@ -1,37 +1,50 @@
 <!DOCTYPE html>
+<!-- ========================================== -->
+<!--    Programa: Umai Recetas                  -->
+<!--    Programo: Fernando Albornoz             -->
+<!--     Archivo: presupuestos.html             -->
+<!--     Version: 1.3 01-09-2026                -->
+<!-- ========================================== -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Umai Recetas - Presupuestos</title>
+  <title>Umai - Presupuestos</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Librería para generar PDFs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
+  <!-- CABECERA DE NAVEGACIÓN BASE -->
   <header class="app-header">
-    <div class="nav-brand">
-      <span>🥐</span> Umai Recetas
-    </div>
-    <ul class="nav-links">
-      <li><a href="index.html">Inicio</a></li>
-      <li><a href="ingredientes.html">Ingredientes</a></li>
-      <li><a href="recetas.html">Recetas</a></li>
-      <li><a href="presupuestos.html" class="active">Presupuestos</a></li>
-    </ul>
+    <div class="nav-brand">🎂 Umai by Sami</div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Panel</a></li>
+        <li><a href="recetas.html">Recetas</a></li>
+        <li><a href="materiales.html">Materiales</a></li>
+        <li><a href="presupuestos.html" class="active">Presupuestos</a></li>
+      </ul>
+    </nav>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>Nuevo Presupuesto</h2>
+      <h2 id="form-titulo">💼 Generar Nuevo Presupuesto</h2>
       <form id="form-presupuesto">
         <input type="hidden" id="presupuesto-id">
-        
+
+        <!-- Datos Principales -->
         <div class="grid-2-col">
+          
           <div class="form-group">
-            <label for="cliente-nombre">Nombre del Cliente</label>
-            <input type="text" id="cliente-nombre" placeholder="Ej: María López" required>
+            <label for="presupuesto-cliente">Nombre del Cliente</label>
+            <input type="text" id="presupuesto-cliente" placeholder="Ej: María Gómez" required>
           </div>
           <div class="form-group">
             <label for="presupuesto-fecha">Fecha</label>
@@ -39,94 +52,108 @@
           </div>
         </div>
 
-        <div class="card" style="background-color: #f8fafc; border-style: dashed; padding: 1rem;">
-          <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Agregar Recetas / Productos</h3>
-          <div class="grid-3-col">
-            <div class="form-group">
-              <label for="select-receta">Receta</label>
-              <select id="select-receta">
-                <option value="">Seleccione una receta...</option>
+        <!-- Selector Dinámico de Recetas Multiples -->
+        <div style="margin: 1.5rem 0 1rem 0; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Recetas a Presupuestar</label>
+          <div class="grid-3-col" style="margin-top: 0.5rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <!-- Se mantienen los dos IDs compatibles (select-receta y presupuesto-receta) por si el JS busca cualquiera de ambos -->
+              <select id="select-receta" name="presupuesto-receta">
+                <option value="">-- Seleccionar Receta --</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="receta-cantidad">Cantidad</label>
-              <input type="number" id="receta-cantidad" min="1" value="1">
+            <div class="form-group" style="margin-bottom:0;">
+              <input type="number" step="any" id="receta-cantidad" placeholder="Cantidad / Multiplicador" value="1" min="0.1">
             </div>
-            <button type="button" id="btn-agregar-receta" class="btn btn-secondary">Agregar</button>
-          </div>
-
-          <div id="lista-recetas-presupuesto" style="margin-top: 1rem;">
-            <!-- Items agregados dinámicamente -->
+            <button type="button" id="btn-agregar-receta" class="btn btn-secondary">+ Agregar Receta</button>
           </div>
         </div>
 
-        <div class="grid-2-col">
-          <div class="form-group">
-            <label for="margen-ganancia">Margen de Ganancia (%)</label>
-            <input type="number" id="margen-ganancia" value="50" min="0" step="5">
-          </div>
+        <!-- Lista de Recetas Agregadas al Presupuesto -->
+        <div id="lista-recetas-presupuesto" style="margin-bottom: 1.5rem;">
+          <!-- Se agregan dinámicamente con JS -->
         </div>
 
+        <!-- Margen de Ganancia -->
+        <div class="form-group" style="border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label for="presupuesto-margen">Margen de Ganancia (%)</label>
+          <input type="number" step="any" id="presupuesto-margen" placeholder="Ej: 100" value="100" min="0" required>
+        </div>
+
+        <!-- Resumen de Totales del Presupuesto -->
         <div class="costo-resumen">
           <div class="costo-row">
-            <span>Costo Total Recetas:</span>
-            <span id="resumen-costo-base">$0.00</span>
+            <span>Costo Total de Producción:</span>
+            <span id="resumen-costo-produccion">$0.00</span>
           </div>
           <div class="costo-row">
             <span>Ganancia Estimada:</span>
             <span id="resumen-ganancia">$0.00</span>
           </div>
           <div class="costo-row costo-total-final">
-            <span>Precio Final Presupuesto:</span>
-            <span id="resumen-precio-final">$0.00</span>
+            <span>Precio Final Sugerido:</span>
+            <span id="presupuesto-precio-final">$0.00</span>
           </div>
         </div>
 
-        <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
-          <button type="submit" class="btn" style="flex: 1;">Guardar Presupuesto</button>
-          <button type="button" id="btn-cancelar" class="btn btn-secondary" style="display: none;">Cancelar</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button type="submit" id="btn-submit-presupuesto" class="btn" style="flex: 1;">Guardar Presupuesto</button>
+          <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary" style="display: none;">Cancelar</button>
         </div>
       </form>
     </section>
 
-    <!-- Lista de Presupuestos Guardados -->
+    <!-- Historial de Presupuestos -->
     <section class="card">
-      <h2>Presupuestos Guardados</h2>
+      <h2>Presupuestos Emitidos</h2>
       <div class="table-responsive">
         <table>
           <thead>
             <tr>
               <th>Fecha</th>
               <th>Cliente</th>
-              <th>Total ($)</th>
+              <th>Recetas</th>
+              <th>Costo Total</th>
+              <th>Precio Final</th>
               <th style="text-align: center;">Acciones</th>
             </tr>
           </thead>
           <tbody id="tabla-presupuestos">
-            <!-- Filas dinámicas -->
+            <!-- Carga dinámicamente -->
           </tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <!-- Modal Detalle del Presupuesto -->
-  <div id="modal-presupuesto" class="modal">
+  <!-- Modal para ver el detalle del presupuesto -->
+  <div id="modal-detalle" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Detalle del Presupuesto</h3>
+        <h3 id="modal-titulo">Detalle de Presupuesto</h3>
         <button class="close-modal" id="btn-cerrar-modal">&times;</button>
       </div>
       <div id="modal-body">
-        <!-- Contenido dinámico -->
+        <!-- Renderizado dinámico -->
       </div>
     </div>
   </div>
 
+  <script type="module" src="js/presupuestos.js"></script>
+
+  <!-- PIE DE PÁGINA BASE -->
   <footer class="app-footer">
-    Umai Recetas - Desarrollado por Fernando Albornoz
+    <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
   </footer>
 
-  <script src="js/presupuestos.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputFecha = document.getElementById('presupuesto-fecha');
+      if (inputFecha && !inputFecha.value) {
+        inputFecha.value = new Date().toISOString().split('T')[0];
+      }
+    });
+  </script>
+
 </body>
 </html>

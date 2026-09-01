@@ -1,117 +1,165 @@
 <!DOCTYPE html>
+<!-- ========================================== -->
+<!--    Programa: Umai Recetas                  -->
+<!--    Programo: Fernando Albornoz             -->
+<!--     Archivo: recetas.html                  -->
+<!--     Version: 1.0 01-09-2026                -->
+<!-- ========================================== -->
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Umai Recetas - Recetas</title>
+  <title>Umai - Gestión de Recetas</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
   <link rel="stylesheet" href="css/styles.css">
-  <!-- Librería para generar PDFs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
 
+  <!-- CABECERA DE NAVEGACIÓN BASE -->
   <header class="app-header">
-    <div class="nav-brand">
-      <span>🥐</span> Umai Recetas
-    </div>
-    <ul class="nav-links">
-      <li><a href="index.html">Inicio</a></li>
-      <li><a href="ingredientes.html">Ingredientes</a></li>
-      <li><a href="recetas.html" class="active">Recetas</a></li>
-      <li><a href="presupuestos.html">Presupuestos</a></li>
-    </ul>
+    <div class="nav-brand">🎂 Umai by Sami</div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="index.html">Panel</a></li>
+        <li><a href="recetas.html" class="active">Recetas</a></li>
+        <li><a href="materiales.html">Materiales</a></li>
+        <li><a href="presupuestos.html">Presupuestos</a></li>
+      </ul>
+    </nav>
   </header>
 
   <main class="container">
+    <!-- Formulario de creación/edición de receta -->
     <section class="card">
-      <h2>Nueva Receta</h2>
+      <h2 id="form-titulo">📖 Nueva Receta Base</h2>
       <form id="form-receta">
         <input type="hidden" id="receta-id">
-        
+
         <div class="grid-2-col">
           <div class="form-group">
             <label for="receta-nombre">Nombre de la Receta</label>
-            <input type="text" id="receta-nombre" placeholder="Ej: Tarta de Jamón y Queso" required>
+            <input type="text" id="receta-nombre" placeholder="Ej: Bizcochuelo de Vainilla 20cm" required>
           </div>
           <div class="form-group">
             <label for="receta-rendimiento">Rendimiento (Porciones/Unidades)</label>
-            <input type="number" id="receta-rendimiento" value="1" min="1" required>
+            <input type="text" id="receta-rendimiento" placeholder="Ej: 12 porciones o 1 torta" required>
           </div>
         </div>
 
-        <div class="card" style="background-color: #f8fafc; border-style: dashed; padding: 1rem;">
-          <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Ingredientes de la Receta</h3>
-          <div class="grid-3-col">
-            <div class="form-group">
-              <label for="select-ingrediente">Ingrediente</label>
-              <select id="select-ingrediente">
-                <option value="">Seleccione un ingrediente...</option>
+        <!-- 1. Ingredientes / Insumos -->
+        <div style="margin: 1.5rem 0 1rem 0;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">1. Insumos e Ingredientes</label>
+          <div class="grid-3-col" style="margin-top: 0.5rem;">
+            <div class="form-group" style="margin-bottom:0;">
+              <select id="select-insumo">
+                <option value="">-- Seleccionar Insumo --</option>
               </select>
             </div>
-            <div class="form-group">
-              <label for="ingrediente-cantidad">Cantidad Utilizada</label>
-              <input type="number" id="ingrediente-cantidad" step="0.01" min="0" placeholder="Ej: 250">
+            <div class="form-group" style="margin-bottom:0;">
+              <input type="number" step="any" id="insumo-cantidad" placeholder="Cantidad usada">
             </div>
-            <button type="button" id="btn-agregar-ingrediente" class="btn btn-secondary">Agregar</button>
-          </div>
-
-          <div id="lista-ingredientes-receta" style="margin-top: 1rem;">
-            <!-- Ingredientes agregados -->
+            <button type="button" id="btn-agregar-insumo" class="btn btn-secondary">+ Agregar</button>
           </div>
         </div>
 
+        <div id="lista-insumos-receta" style="margin-bottom: 1.5rem;">
+          <!-- Se agregan dinámicamente -->
+        </div>
+
+        <!-- 2. Mano de Obra y Costos Indirectos -->
+        <div style="margin: 1.5rem 0 1rem 0; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+          <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">2. Mano de Obra y Packaging / Servicios</label>
+          
+          <div class="grid-2-col" style="margin-top: 0.75rem;">
+            <div class="form-group">
+              <label for="receta-horas">Horas de Trabajo (Tiempo de Elaboración)</label>
+              <input type="number" step="any" id="receta-horas" placeholder="Ej: 1.5" value="0" min="0">
+            </div>
+            <div class="form-group">
+              <label for="receta-precio-hora">Valor de la Hora de Trabajo ($)</label>
+              <input type="number" step="any" id="receta-precio-hora" placeholder="Ej: 3000" value="0" min="0">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="receta-packaging">Gastos Adicionales / Packaging / Servicios ($)</label>
+            <input type="number" step="any" id="receta-packaging" placeholder="Ej: 500" value="0" min="0">
+          </div>
+        </div>
+
+        <!-- Resumen de Costos -->
         <div class="costo-resumen">
+          <div class="costo-row">
+            <span>Costo Insumos Directos:</span>
+            <span id="resumen-costo-insumos">$0.00</span>
+          </div>
+          <div class="costo-row">
+            <span>Mano de Obra Calculada:</span>
+            <span id="resumen-costo-mano-obra">$0.00</span>
+          </div>
+          <div class="costo-row">
+            <span>Packaging y Gastos Varios:</span>
+            <span id="resumen-costo-packaging">$0.00</span>
+          </div>
           <div class="costo-row costo-total-final">
-            <span>Costo Total Receta:</span>
-            <span id="resumen-costo-receta">$0.00</span>
+            <span>Costo Total de Producción:</span>
+            <span id="costo-total-receta">$0.00</span>
           </div>
         </div>
 
-        <div style="margin-top: 1.5rem; display: flex; gap: 0.5rem;">
-          <button type="submit" class="btn" style="flex: 1;">Guardar Receta</button>
-          <button type="button" id="btn-cancelar-receta" class="btn btn-secondary" style="display: none;">Cancelar</button>
+        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+          <button type="submit" id="btn-submit-receta" class="btn" style="flex: 1;">Guardar Receta</button>
+          <button type="button" id="btn-cancelar-edicion" class="btn btn-secondary" style="display: none;">Cancelar</button>
         </div>
       </form>
     </section>
 
-    <!-- Lista de Recetas Guardadas -->
+    <!-- Lista de recetas guardadas -->
     <section class="card">
       <h2>Recetas Guardadas</h2>
       <div class="table-responsive">
         <table>
           <thead>
             <tr>
-              <th>Nombre</th>
+              <th>Receta</th>
               <th>Rendimiento</th>
-              <th>Costo Total ($)</th>
-              <th style="text-align: center;">Acciones</th>
+              <th>Tiempo / M.O.</th>
+              <th>Insumos</th>
+              <th>Costo Total</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody id="tabla-recetas">
-            <!-- Filas dinámicas -->
+            <!-- Se carga dinámicamente -->
           </tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <!-- Modal Detalle Receta -->
-  <div id="modal-receta" class="modal">
+  <!-- Modal para ver el detalle de la receta -->
+  <div id="modal-detalle" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Detalle de la Receta</h3>
-        <button class="close-modal" id="btn-cerrar-modal-receta">&times;</button>
+        <h3 id="modal-titulo">Detalle de Receta</h3>
+        <button class="close-modal" id="btn-cerrar-modal">&times;</button>
       </div>
-      <div id="modal-body-receta">
-        <!-- Contenido dinámico -->
+      <div id="modal-body">
+        <!-- Contenido detallado -->
       </div>
     </div>
   </div>
 
-  <footer class="app-footer">
-    Umai Recetas - Desarrollado por Fernando Albornoz
-  </footer>
+  <script type="module" src="js/recetas.js"></script>
 
-  <script src="js/recetas.js"></script>
+  <!-- PIE DE PÁGINA BASE -->
+  <footer class="app-footer">
+    <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
+  </footer>   
 </body>
 </html>
