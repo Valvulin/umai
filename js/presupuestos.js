@@ -2,7 +2,7 @@
 //    Programa: Umai Recetas                  
 //    Programo: Fernando Albornoz             
 //     Archivo: js/presupuestos.js            
-//     Version: 1.3 01-09-2026                
+//     Version: 1.4 01-09-2026                
 // ==========================================
 
 import { db } from './firebase-config.js';
@@ -146,11 +146,9 @@ if (presupuestoMargen) {
 function calcularPresupuesto() {
   let costoProduccion = 0;
 
-  // Si hay lista dinámica de recetas
   if (recetasAgregadas.length > 0) {
     costoProduccion = recetasAgregadas.reduce((acc, r) => acc + (r.costoUnitario * r.cantidad), 0);
   } else if (selectReceta && selectReceta.value) {
-    // Compatibilidad en caso de selección simple
     const recetaBase = listaRecetasBase.find(r => r.id === selectReceta.value);
     if (recetaBase) {
       const mult = parseFloat(recetaCantidad.value) || 1;
@@ -250,7 +248,6 @@ onSnapshot(collection(db, "presupuestos"), (snapshot) => {
     const id = docSnap.id;
     const item = { id, ...data };
 
-    // Formatear texto de recetas
     let resumenRecetas = '';
     if (Array.isArray(data.recetas) && data.recetas.length > 0) {
       resumenRecetas = data.recetas.map(r => `${r.nombre} (${r.cantidad})`).join(', ');
@@ -270,6 +267,7 @@ onSnapshot(collection(db, "presupuestos"), (snapshot) => {
       <td style="text-align: center;">
         <div class="action-btns" style="justify-content: center;">
           <button class="btn-action btn-ver" title="Mirar">👁️</button>
+          <button class="btn-action btn-pdf" title="Descargar PDF" style="background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;">📄</button>
           <button class="btn-action btn-editar" title="Editar">✏️</button>
           <button class="btn-action btn-eliminar" title="Borrar">🗑️</button>
         </div>
@@ -277,6 +275,7 @@ onSnapshot(collection(db, "presupuestos"), (snapshot) => {
     `;
 
     fila.querySelector('.btn-ver').addEventListener('click', () => verPresupuesto(item));
+    fila.querySelector('.btn-pdf').addEventListener('click', () => descargarPDF(item));
     fila.querySelector('.btn-editar').addEventListener('click', () => editarPresupuesto(item));
     fila.querySelector('.btn-eliminar').addEventListener('click', () => eliminarPresupuesto(id, data.cliente));
 
@@ -310,7 +309,12 @@ function verPresupuesto(item) {
     <p style="font-size: 1.1rem; font-weight: bold; margin-top: 0.5rem; color: #166534;">
       Precio Final Sugerido: $${parseFloat(item.precioFinal || 0).toFixed(2)}
     </p>
+    <div style="margin-top: 1rem; text-align: right;">
+      <button class="btn btn-pdf-modal" style="background-color: #10b981; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">📄 Descargar PDF</button>
+    </div>
   `;
+
+  modalBody.querySelector('.btn-pdf-modal').addEventListener('click', () => descargarPDF(item));
   modalDetalle.style.display = 'flex';
 }
 
@@ -356,4 +360,93 @@ async function eliminarPresupuesto(id, cliente) {
       alert("No se pudo eliminar el presupuesto.");
     }
   }
+}
+
+// 9. Generación e Impresión del PDF
+function descargarPDF(item) {
+  if (typeof html2pdf === 'undefined') {
+    alert("La librería html2pdf no está cargada. Verifica incluir el <script> en el HTML.");
+    return;
+  }
+
+  const factorGanancia = 1 + ((parseFloat(item.margen) || 0) / 100);
+
+  let recetasArr = Array.isArray(item.recetas) && item.recetas.length > 0 ? item.recetas : [{
+    nombre: item.recetaNombre || 'Producto',
+    cantidad: item.cantidad || 1,
+    costoUnitario: (item.costoProduccion || 0) / (item.cantidad || 1)
+  }];
+
+  const filasTabla = recetasArr.map(r => {
+    const precioUnitarioVenta = r.costoUnitario * factorGanancia;
+    const subtotalVenta = precioUnitarioVenta * r.cantidad;
+    return `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; font-size: 14px;">${r.nombre}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: center; font-size: 14px;">${r.cantidad}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px;">$${precioUnitarioVenta.toFixed(2)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #e2e8f0; text-align: right; font-size: 14px; font-weight: 600;">$${subtotalVenta.toFixed(2)}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const pdfContainer = document.createElement('div');
+  pdfContainer.style.padding = '30px';
+  pdfContainer.style.fontFamily = 'Arial, sans-serif';
+  pdfContainer.style.color = '#1e293b';
+  pdfContainer.style.backgroundColor = '#ffffff';
+
+  pdfContainer.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #5247e6; padding-bottom: 15px; margin-bottom: 25px;">
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div>
+          <h1 style="margin: 0; color: #5247e6; font-size: 26px; text-transform: uppercase; letter-spacing: 1px;">PRESUPUESTO</h1>
+          <span style="font-size: 13px; color: #64748b;">Umai Recetas</span>
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <p style="margin: 0; font-size: 14px;"><strong>Fecha:</strong> ${item.fecha || 'N/A'}</p>
+        <p style="margin: 4px 0 0 0; font-size: 14px;"><strong>ID:</strong> #${item.id.slice(-5)}</p>
+      </div>
+    </div>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
+      <p style="margin: 0; font-size: 15px;"><strong>Cliente:</strong> ${item.cliente}</p>
+    </div>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+      <thead>
+        <tr style="background-color: #f1f5f9; color: #475569; text-align: left;">
+          <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; font-size: 13px;">DESCRIPCIÓN</th>
+          <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: center; font-size: 13px;">CANT.</th>
+          <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: right; font-size: 13px;">PRECIO UNIT.</th>
+          <th style="padding: 10px; border-bottom: 2px solid #cbd5e1; text-align: right; font-size: 13px;">SUBTOTAL</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filasTabla}
+      </tbody>
+    </table>
+
+    <div style="display: flex; justify-content: flex-end; margin-top: 20px;">
+      <div style="width: 250px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 15px; text-align: right;">
+        <span style="font-size: 13px; color: #166534; display: block; margin-bottom: 5px;">TOTAL A PAGAR</span>
+        <span style="font-size: 22px; font-weight: 700; color: #15803d;">$${parseFloat(item.precioFinal || 0).toFixed(2)}</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 50px; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 12px; color: #94a3b8;">
+      Gracias por su confianza. Presupuesto válido por 15 días.
+    </div>
+  `;
+
+  const opt = {
+    margin:       10,
+    filename:     `Presupuesto_${item.cliente.replace(/\s+/g, '_')}_${item.fecha || 's-f'}.pdf`,
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(pdfContainer).save();
 }

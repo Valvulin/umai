@@ -2,7 +2,7 @@
 //    Programa: Umai Recetas                  
 //    Programo: Fernando Albornoz             
 //     Archivo: js/recetas.js            
-//     Version: 1.3 01-09-2026                
+//     Version: 1.4 01-09-2026                
 // ==========================================
 import { db } from './firebase-config.js';
 import { 
@@ -234,6 +234,7 @@ onSnapshot(collection(db, "recetas"), (snapshot) => {
       <td>
         <div class="action-btns">
           <button class="btn-action btn-ver" title="Ver detalle">👁️</button>
+          <button class="btn-action btn-pdf" title="Descargar PDF" style="background-color: #f0fdf4; border-color: #bbf7d0; color: #166534;">📄</button>
           <button class="btn-action btn-editar" title="Editar">✏️</button>
           <button class="btn-action btn-eliminar" title="Eliminar">🗑️</button>
         </div>
@@ -241,6 +242,7 @@ onSnapshot(collection(db, "recetas"), (snapshot) => {
     `;
 
     fila.querySelector('.btn-ver').addEventListener('click', () => verReceta(receta));
+    fila.querySelector('.btn-pdf').addEventListener('click', () => descargarPDF(receta));
     fila.querySelector('.btn-editar').addEventListener('click', () => editarReceta(receta));
     fila.querySelector('.btn-eliminar').addEventListener('click', () => eliminarReceta(id, data.nombre));
 
@@ -252,8 +254,8 @@ onSnapshot(collection(db, "recetas"), (snapshot) => {
 function verReceta(receta) {
   modalTitulo.textContent = receta.nombre;
   
-  let htmlInsumos = receta.insumos.map(i => 
-    `<li>${i.nombre}: ${i.cantidad} ${i.unidad} ($${parseFloat(i.costoCalculado).toFixed(2)})</li>`
+  let htmlInsumos = (receta.insumos || []).map(i => 
+    `<li>${i.nombre}: ${i.cantidad} ${i.unidad} ($${parseFloat(i.costoCalculado || 0).toFixed(2)})</li>`
   ).join('');
 
   modalBody.innerHTML = `
@@ -265,7 +267,7 @@ function verReceta(receta) {
     <p><strong>Tiempo:</strong> ${receta.horasTrabajo || 0} hs ($${parseFloat(receta.costoManoObra || 0).toFixed(2)})</p>
     <p><strong>Packaging / Varios:</strong> $${parseFloat(receta.costoPackaging || 0).toFixed(2)}</p>
     <p style="font-size: 1.1rem; font-weight: bold; margin-top: 0.5rem; color: #166534;">
-      Costo Total: $${parseFloat(receta.costoTotal).toFixed(2)}
+      Costo Total: $${parseFloat(receta.costoTotal || 0).toFixed(2)}
     </p>
   `;
 
@@ -305,3 +307,81 @@ async function eliminarReceta(id, nombre) {
     }
   }
 }
+
+// 5. Descargar PDF
+function descargarPDF(receta) {
+  if (typeof html2pdf === 'undefined') {
+    alert("La librería html2pdf no se ha cargado correctamente.");
+    return;
+  }
+
+  const container = document.createElement('div');
+  container.style.padding = '30px';
+  container.style.fontFamily = 'Arial, sans-serif';
+  container.style.color = '#1e293b';
+
+  let insumosHTML = '';
+  if (Array.isArray(receta.insumos)) {
+    insumosHTML = receta.insumos.map(i => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${i.nombre}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: center;">${i.cantidad} ${i.unidad}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: right;">$${parseFloat(i.costoCalculado || 0).toFixed(2)}</td>
+      </tr>
+    `).join('');
+  }
+
+  container.innerHTML = `
+    <div style="border-bottom: 3px solid #5247e6; padding-bottom: 10px; margin-bottom: 20px;">
+      <h1 style="color: #5247e6; margin: 0; font-size: 24px;">RECETA BASE: ${receta.nombre.toUpperCase()}</h1>
+      <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;"><strong>Rendimiento:</strong> ${receta.rendimiento}</p>
+    </div>
+
+    <h3 style="color: #334155; margin-bottom: 10px;">Ingredientes / Insumos</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+      <thead>
+        <tr style="background-color: #f1f5f9; text-align: left;">
+          <th style="padding: 8px; border-bottom: 2px solid #cbd5e1;">Insumo</th>
+          <th style="padding: 8px; border-bottom: 2px solid #cbd5e1; text-align: center;">Cantidad</th>
+          <th style="padding: 8px; border-bottom: 2px solid #cbd5e1; text-align: right;">Costo</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${insumosHTML}
+      </tbody>
+    </table>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin-bottom: 20px;">
+      <h3 style="color: #334155; margin-top: 0; margin-bottom: 10px; font-size: 16px;">Desglose de Costos</h3>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>Subtotal Insumos:</span>
+        <strong>$${parseFloat(receta.costoInsumos || 0).toFixed(2)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>Mano de Obra (${receta.horasTrabajo || 0} hs @ $${parseFloat(receta.precioHora || 0).toFixed(2)}/h):</span>
+        <strong>$${parseFloat(receta.costoManoObra || 0).toFixed(2)}</strong>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+        <span>Packaging / Varios:</span>
+        <strong>$${parseFloat(receta.costoPackaging || 0).toFixed(2)}</strong>
+      </div>
+    </div>
+
+    <div style="text-align: right; font-size: 20px; font-weight: bold; color: #166534; border-top: 2px solid #cbd5e1; padding-top: 10px;">
+      Costo Total Receta: $${parseFloat(receta.costoTotal || 0).toFixed(2)}
+    </div>
+  `;
+
+  const opt = {
+    margin: 10,
+    filename: `Receta_${receta.nombre.replace(/\s+/g, '_')}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(container).save();
+}
+
+// Exponer al ámbito global
+window.descargarPDF = descargarPDF;
