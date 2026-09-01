@@ -1,3 +1,9 @@
+// ==========================================
+//    Programa: Umai Recetas                  
+//    Programo: Fernando Albornoz             
+//     Archivo: js/materiales.js            
+//     Version: 1.3 01-09-2026                
+// ==========================================
 import { db } from './firebase-config.js';
 import { 
   collection, 

@@ -3,7 +3,7 @@
 <!--    Programa: Umai Recetas                  -->
 <!--    Programo: Fernando Albornoz             -->
 <!--     Archivo: presupuestos.html             -->
-<!--     Version: 1.2 01-09-2026                -->
+<!--     Version: 1.3 01-09-2026                -->
 <!-- ========================================== -->
 <html lang="es">
 <head>
@@ -56,7 +56,8 @@
           <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-dark);">Recetas a Presupuestar</label>
           <div class="grid-3-col" style="margin-top: 0.5rem;">
             <div class="form-group" style="margin-bottom:0;">
-              <select id="select-receta">
+              <!-- Se mantienen los dos IDs compatibles (select-receta y presupuesto-receta) por si el JS busca cualquiera de ambos -->
+              <select id="select-receta" name="presupuesto-receta">
                 <option value="">-- Seleccionar Receta --</option>
               </select>
             </div>
@@ -113,7 +114,7 @@
               <th>Recetas</th>
               <th>Costo Total</th>
               <th>Precio Final</th>
-              <th>Acciones</th>
+              <th style="text-align: center;">Acciones</th>
             </tr>
           </thead>
           <tbody id="tabla-presupuestos">
