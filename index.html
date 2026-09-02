@@ -3,7 +3,7 @@
 <!--    Programa: Umai Recetas                  -->
 <!--    Programo: Fernando Albornoz             -->
 <!--     Archivo: index.html                    -->
-<!--     Version: 1.0 01-09-2026                -->
+<!--     Version: 1.2 01-09-2026                -->
 <!-- ========================================== -->
 <html lang="es">
 <head>
@@ -11,14 +11,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Umai - Panel Principal</title>
   
-  <!-- Fuente Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <link rel="manifest" href="manifest.json" crossorigin="use-credentials">
-
-  <!-- Hoja de Estilos Principal -->
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -39,46 +36,32 @@
   <!-- Encabezado Principal -->
   <div class="hero-header">
     <h1>Panel Principal</h1>
-    <p>Gestiona tus recetas e ingredientes para calcular presupuestos</p>
+    <h2>Gestiona tus recetas e ingredientes para calcular presupuestos</h2>
   </div>
 
-  <!-- Grilla de Accesos -->
+  <!-- Grilla de Tarjetas con Imagen Clickeable -->
   <main class="main-container">
-    <div class="cards-grid">
+    <div class="cards-grid-images">
 
-      <!-- Card 1: Mis Recetas -->
-      <div class="card-item">
-        <div>
-          <div class="card-icon">🧁</div>
-          <h2 class="card-title">Mis Recetas</h2>
-          <p class="card-description">Crea y gestiona tus recetas con cálculo automático de costos e insumos utilizados.</p>
-        </div>
-        <a href="recetas.html" class="btn-action">Ver Recetas</a>
-      </div>
+      <!-- Tarjeta 3: Materiales -->
+      <a href="materiales.html" class="card-image-link">
+        <img src="imagenes/materiales.png" alt="Acceder a Materiales" class="card-img">
+      </a>
+	  
+      <!-- Tarjeta 1: Recetas -->
+      <a href="recetas.html" class="card-image-link">
+        <img src="imagenes/recetas.png" alt="Acceder a Recetas" class="card-img">
+      </a>
 
-      <!-- Card 2: Materiales -->
-      <div class="card-item">
-        <div>
-          <div class="card-icon">🥄</div>
-          <h2 class="card-title">Materiales</h2>
-          <p class="card-description">Administrá tu inventario de materiales e insumos con precios y unidades de medida.</p>
-        </div>
-        <a href="materiales.html" class="btn-action">Ver Materiales</a>
-      </div>
+      <!-- Tarjeta 2: Presupuesto -->
+      <a href="presupuestos.html" class="card-image-link">
+        <img src="imagenes/presupuesto.png" alt="Acceder a Presupuestos" class="card-img">
+      </a>
 
-      <!-- Card 3: Eventos y Presupuestos -->
-      <div class="card-item">
-        <div>
-          <div class="card-icon">📋</div>
-          <h2 class="card-title">Eventos y Presupuestos</h2>
-          <p class="card-description">Cotizá pedidos o eventos completos. Agrupá recetas y calculá el precio final de venta.</p>
-        </div>
-        <a href="presupuestos.html" class="btn-action">Presupuestos</a>
-      </div>
+
 
     </div>
   </main>
-
   <!-- PIE DE PÁGINA BASE -->
   <footer class="app-footer">
     <p>Versión 1.0 - Copyright 2026 - Fernando Albornoz</p>
