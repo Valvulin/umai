@@ -151,7 +151,7 @@ main.container,
 
 /* Imagen recortada (Recetas, Materiales, Presupuestos) */
 .card-img {
-  width: 90%;
+  width: 100%;
   height: auto;
   display: block;
   border-radius: var(--radius);
